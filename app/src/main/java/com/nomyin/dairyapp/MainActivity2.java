@@ -4,26 +4,51 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 //import android.content.DialogInterface;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 //import android.os.Build;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class MainActivity2 extends AppCompatActivity {
-    Button btn_addEvent;
+    private Button btn_addEvent;
+    private ArrayList<MyEvent> events;
+    private EventAdapter eventAdapter;
+    private ArrayAdapter<String> adapter;
+    private ListView listView;
+    private ArrayList<String> listData;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
+
+        listView = findViewById(R.id.listView);
+         eventAdapter = new EventAdapter(this);
+        listView.setAdapter(eventAdapter);
+
+        events = new ArrayList();
+        listData = new ArrayList<>();
+        eventAdapter.events = events;
+        eventAdapter.notifyDataSetChanged();
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
+
         addNewEvent();
     }
     //create the menu
@@ -109,6 +134,10 @@ public class MainActivity2 extends AppCompatActivity {
                 String eventName = eventNameInput.getText().toString();
                 TextView textView = findViewById(R.id.tex);
                 textView.setText(eventName);
+
+                events.add(new MyEvent(eventName));
+                eventAdapter.notifyDataSetChanged();
+
             }
         });
         builder.setNegativeButton("Cancel", null);
@@ -117,4 +146,7 @@ public class MainActivity2 extends AppCompatActivity {
         AlertDialog dialog = builder.create();
         dialog.show();
     }
+
+//load contacts
+
 }

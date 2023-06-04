@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Delayed transition to MainActivity2
         new Handler().postDelayed(() -> {
-            Intent intent = new Intent(MainActivity.this, MainActivity2.class);
+               Intent intent = new Intent(MainActivity.this, MainActivity2.class);
             startActivity(intent);
           //TODO IF THE USER GETS BACK TO THIS PAGE HE CANT DO ANYTHING AND IT IS NOT MOVES
            //TODO// finish(); // Optional: Finish MainActivity to prevent going back to it
@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
         setupNotification();
         showNotification();
         setupBroadcast();
+
+
     }
     private void setupBroadcast()
     {

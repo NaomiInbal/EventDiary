@@ -1,6 +1,9 @@
 package com.nomyin.dairyapp;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,8 +16,12 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 
 public class SettingActivity extends AppCompatActivity {
@@ -62,6 +69,7 @@ public class SettingActivity extends AppCompatActivity {
                         SharedPreferences.Editor editor = sp.edit();
                         editor.putString("set2", time);
                         editor.apply();
+                        AlarmByTime.setAlarm(time, SettingActivity.this);
 
                     }
                 }, hour, minute, true);
@@ -78,4 +86,6 @@ public class SettingActivity extends AppCompatActivity {
         // Register the receiver to start listening for battery change messages
 
     }
+
+
 }
