@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">DairyApp</string>
+    <item name="day" type="string">The day of the event</item>
+    <item name="before" type="string">One day before the event</item>
+    <item name="week" type="string">A week before the event</item>
+    <string name="details_app" type="string">Android OS " + Build.VERSION.RELEASE + " API " + Build.VERSION.SDK_INT</string>
+    <string name="my_details" type="string">Event Diary \n Naomi Inbal-Weinstein \n 3155555714 \n 19.06.2023</string>
+    <string name="setting_day_of_notification">Set a day for the reminder</string>
+    <string name="time">Set the time</string>
+</resources>

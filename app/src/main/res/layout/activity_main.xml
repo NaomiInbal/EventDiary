@@ -1,0 +1,23 @@
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="200dp"
+        android:gravity="center"
+        android:text="Event Diary \n Naomi Inbal-Weinstein \n 3155555714 \n 19.06.2023"
+        android:lineSpacingExtra="12dp"
+        android:textColor="#2196F3"
+        android:textSize="32sp"
+        android:textStyle="bold"/>
+
+
+</LinearLayout>
