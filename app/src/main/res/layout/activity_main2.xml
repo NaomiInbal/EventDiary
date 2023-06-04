@@ -23,9 +23,6 @@
         tools:layout_editor_absoluteY="277dp"
         android:shadowColor="#2196F3"
         android:text="Add new event"/>
-    <TextView
-        android:id="@+id/tex"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
