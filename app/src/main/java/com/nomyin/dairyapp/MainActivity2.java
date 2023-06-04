@@ -1,9 +1,13 @@
 package com.nomyin.dairyapp;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 //import android.content.DialogInterface;
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
@@ -31,13 +35,20 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity2 extends AppCompatActivity {
     private Button btn_addEvent;
@@ -56,9 +67,8 @@ public class MainActivity2 extends AppCompatActivity {
     private EditText eventNoteInput;
     private ImageView eventImageView;
     private Bitmap eventImageBitmap;
-    // STEP 1:
-    Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-    startActivityForResult(takePhotoIntent, REQUEST_CAMERA_PHOTO);
+    private static final int REQUEST_CAMERA_PHOTO = 1;
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +84,9 @@ public class MainActivity2 extends AppCompatActivity {
         eventAdapter.notifyDataSetChanged();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
 
+
+        Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(takePhotoIntent, REQUEST_CAMERA_PHOTO);
         addNewEvent();
     }
     //create the menu
@@ -269,9 +282,8 @@ public class MainActivity2 extends AppCompatActivity {
         eventImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent imagePickerIntent = new Intent(Intent.ACTION_PICK);
-                imagePickerIntent.setType("image/*");
-                startActivityForResult(Intent.createChooser(imagePickerIntent, "Select Image"), REQUEST_IMAGE_PICKER);
+                // Start the camera activity
+
             }
         });
 
@@ -313,7 +325,29 @@ public class MainActivity2 extends AppCompatActivity {
         dialog.setCanceledOnTouchOutside(false);
         dialog.show();
     }
+//TODO put in a thread
+    //firebase - store the data
+    // Create a new user with a first and last name
+    private void CreateData(){
+        Map<String, Object> event = new HashMap<>();
+        event.put("name", events.get(0).contactName);
+        event.put("contact", "Lovelace");
 
-//load contacts
 
+        // Add a new document with a generated ID
+        db.collection("events")
+                .add(event)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                    @Override
+                    public void onSuccess(DocumentReference documentReference) {
+                        Log.d("mylog", "DocumentSnapshot added with ID: " + documentReference.getId());
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("mylog", "Error adding document", e);
+                    }
+                });
+    }
 }
