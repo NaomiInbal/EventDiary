@@ -240,8 +240,11 @@ public class MainActivity2 extends AppCompatActivity {
         chooseContactButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent contactPickerIntent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
-                startActivityForResult(contactPickerIntent, REQUEST_CONTACT_PICKER);
+                Intent intent = new Intent(MainActivity2.this , Contacts.class);
+                startActivity(intent);
+
+                //Intent contactPickerIntent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                //startActivityForResult(contactPickerIntent, REQUEST_CONTACT_PICKER);
 
             }
         });
@@ -349,5 +352,12 @@ public class MainActivity2 extends AppCompatActivity {
                         Log.w("mylog", "Error adding document", e);
                     }
                 });
+    }
+
+    private void saveEventOnFirestore(MyEvent event)
+    {
+        ///url =  uload imag to Strorage
+
+        // upload event to Frirestore
     }
 }
