@@ -25,7 +25,7 @@ import java.util.Locale;
 
 
 public class SettingActivity extends AppCompatActivity {
-
+private int selectedInx = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +34,7 @@ public class SettingActivity extends AppCompatActivity {
 
         SharedPreferences sp = getSharedPreferences("SettingsPref", Context.MODE_PRIVATE);
         //save the settings in SP
+//TODO replace the 3 with int outside the on creat that initialise first time and check if it  work well with sp when we close and then open the app
         int selectIdx = sp.getInt("set1", 3);
         String time = sp.getString("set2", "0:00");
         TextView timePickerTxt = findViewById(R.id.txtTimepickerID);
@@ -45,7 +46,7 @@ public class SettingActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int i) {
                 RadioButton r = (RadioButton) findViewById(i);
-                int selectedInx = radioGroup.indexOfChild(r);
+                selectedInx = radioGroup.indexOfChild(r);
                 SharedPreferences.Editor editor = sp.edit();
                 editor.putInt("set1", selectedInx);
                 editor.apply();
@@ -78,12 +79,6 @@ public class SettingActivity extends AppCompatActivity {
             }
         });
 
-        //broadcast
-        //  Create BroadcastReceiver object
-        BroadcastReceiver myReceiver = new ReceiverDateChanged();
-        // Create IntentFilter for battery change broadcast
-        IntentFilter filter = new IntentFilter(Intent.ACTION_DATE_CHANGED);
-        // Register the receiver to start listening for battery change messages
 
     }
 
