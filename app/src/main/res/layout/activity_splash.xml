@@ -13,7 +13,7 @@
         android:layout_marginBottom="10dp"
         android:layout_marginTop="200dp"
         android:gravity="center"
-        android:text="Event Diary \n Naomi Inbal-Weinstein \n 3155555714 \n 19.06.2023"
+        android:text="Event Dairy \n Naomi Inbal-Weinstein \n 3155555714 \n 19.06.2023"
         android:lineSpacingExtra="12dp"
         android:textColor="#2196F3"
         android:textSize="32sp"
