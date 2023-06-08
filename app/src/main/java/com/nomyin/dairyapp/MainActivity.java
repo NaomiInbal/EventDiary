@@ -43,6 +43,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.ktx.Firebase;
 
 import java.util.ArrayList;
@@ -328,6 +330,7 @@ public class MainActivity extends AppCompatActivity {
         eventDateStr = selectedDate;
 
         saveEventOnFirestore();
+        readEventsOnFireStore();
         //convert string to date
 //                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 //                Date eventDate = null;
@@ -411,10 +414,8 @@ public class MainActivity extends AppCompatActivity {
         eventAdapter.notifyDataSetChanged();
         Log.d("mylog", "my: " + myEvent);
 
-            CollectionReference eventsRef = db.collection("Events");
-            Log.d("mylog", "eventsRef: " + eventsRef);
 
-            eventsRef.add(myEvent)
+            db.collection("Events").add(myEvent)
                     .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                         @Override
                         public void onSuccess(DocumentReference documentReference) {
@@ -425,6 +426,22 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             Log.w("mylog", "Error adding document", e);
+                        }
+                    });
+        }
+        private void readEventsOnFireStore(){
+            db.collection("Events")
+                    .get()
+                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if (task.isSuccessful()) {
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    Log.d("mylog", document.getId() + " => " + document.getData());
+                                }
+                            } else {
+                                Log.d("mylog", "Error getting documents.", task.getException());
+                            }
                         }
                     });
         }
