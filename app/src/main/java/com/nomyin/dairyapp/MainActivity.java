@@ -1,10 +1,12 @@
 package com.nomyin.dairyapp;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import android.Manifest;
 
 //import android.content.DialogInterface;
@@ -34,13 +36,20 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.ktx.Firebase;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int REQUEST_PICK_CONTACT =1 ;
+    private static final int REQUEST_PICK_CONTACT = 1;
     private Button btn_addEvent;
     private ArrayList<MyEvent> events;
     private EventAdapter eventAdapter;
@@ -53,13 +62,13 @@ public class MainActivity extends AppCompatActivity {
     private Button chooseContactButton;
     private Button eventDateButton;
     private String selectedContactName;
-    private static final int REQUEST_IMAGE_PICKER  = 2;
+    private static final int REQUEST_IMAGE_PICKER = 2;
     private EditText eventNoteInput;
     private ImageView eventImageView;
     private Bitmap eventImageBitmap;
     private String eventImageUrl;
-    private String eventName ;
-   private String eventContactName;
+    private String eventName;
+    private String eventContactName;
     private String eventDateStr;
     private String eventNote;
     private String selectedDate;
@@ -71,13 +80,14 @@ public class MainActivity extends AppCompatActivity {
 
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         listView = findViewById(R.id.listView);
-         eventAdapter = new EventAdapter(this);
+        eventAdapter = new EventAdapter(this);
         listView.setAdapter(eventAdapter);
 
         events = new ArrayList();
@@ -89,7 +99,8 @@ public class MainActivity extends AppCompatActivity {
 //        setupNotification();
 //        showNotification();
 
-   }
+    }
+
     //create the menu
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
@@ -115,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
 
         return true;
     }
+
     //About dialog
     private void aboutAlertDialog() {
         String strDeviceOS = "Android OS " + Build.VERSION.RELEASE + " API " + Build.VERSION.SDK_INT;
@@ -126,11 +138,13 @@ public class MainActivity extends AppCompatActivity {
         });
         dialog.show();
     }
+
     //Moving to settings activity
     private void IntentSettingActivity() {
         Intent intent = new Intent(this, SettingActivity.class);
         startActivity(intent);
     }
+
     //Exit dialog
     private void exitAlertDialog() {
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
@@ -148,8 +162,9 @@ public class MainActivity extends AppCompatActivity {
         });
         dialog.show();
     }
+
     //add new event
-    private void addNewEvent(){
+    private void addNewEvent() {
         btn_addEvent = findViewById(R.id.btnAddEventID);
         btn_addEvent.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -158,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
     private void showAddEventDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add New Event");
@@ -165,10 +181,10 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
 //clear the variables
-        eventName="";
-        eventContactName ="";
-        eventNote="";
-        eventImageUrl="";
+        eventName = "";
+        eventContactName = "";
+        eventNote = "";
+        eventImageUrl = "";
         selectedDate = "";
 
         eventNameInput = new EditText(this);
@@ -179,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
         chooseContactButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-           permissionContacts();
+                permissionContacts();
             }
         });
 
@@ -189,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
         eventDateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-             createCalander();
+                createCalander();
             }
         });
 
@@ -200,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
         eventImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               takePicture(); // Start the camera activity
+                takePicture(); // Start the camera activity
 
             }
         });
@@ -216,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-               saveNewEvent();
+                saveNewEvent();
             }
         });
 
@@ -228,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.setCanceledOnTouchOutside(false);
         dialog.show();
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -240,9 +257,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
     private void openContactPicker() {
-            Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
-            startActivityForResult(intent, REQUEST_PICK_CONTACT);
+        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        startActivityForResult(intent, REQUEST_PICK_CONTACT);
     }
 
     @Override
@@ -263,8 +281,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-        }}
-    private void permissionContacts(){
+        }
+    }
+
+    private void permissionContacts() {
         // Request permission to read contacts
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_CONTACTS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -276,7 +296,8 @@ public class MainActivity extends AppCompatActivity {
             openContactPicker(); // If permission is already granted, open the contact picker
         }
     }
-    private void createCalander(){
+
+    private void createCalander() {
         // Create a Calendar instance
         Calendar calendar = Calendar.getInstance();
 
@@ -298,15 +319,16 @@ public class MainActivity extends AppCompatActivity {
         // Show the date picker dialog
         datePickerDialog.show();
     }
-    private void saveNewEvent(){
+
+    private void saveNewEvent() {
         //TODO required fields
-             //All variables have values, proceed with saving
-            eventName = eventNameInput.getText().toString();
-            eventNote = eventNoteInput.getText().toString();
-            eventDateStr = selectedDate;
-            events.add(new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl));
-            eventAdapter.notifyDataSetChanged();
-       //convert string to date
+        //All variables have values, proceed with saving
+        eventName = eventNameInput.getText().toString();
+        eventNote = eventNoteInput.getText().toString();
+        eventDateStr = selectedDate;
+
+        saveEventOnFirestore();
+        //convert string to date
 //                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 //                Date eventDate = null;
 //                try {
@@ -315,10 +337,11 @@ public class MainActivity extends AppCompatActivity {
 //                    e.printStackTrace();
 //                }
     }
-    private void takePicture(){
+
+    private void takePicture() {
 
     }
-                    ////TODO put in a thread
+    ////TODO put in a thread
 //    //firebase - store the data
 //    // Create a new user with a first and last name
 //    private void CreateData(){
@@ -376,13 +399,37 @@ public class MainActivity extends AppCompatActivity {
 //            notificationManager.createNotificationChannel(notificationChannel);
 //        }
 
-//                        }
 
-//                    private void saveEventOnFirestore (MyEvent event)
-//                    {
-                        ///url =  upload image to Strorage
-//built new event with the url
-                        // upload event to Frirestore
-//                    }
-//                }
-            }
+    private void saveEventOnFirestore() {
+        //                                       //eventImageBitmap
+////                        /url =  upload image to Strorage
+////built new event with the url     }
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
+        events.add(myEvent);
+
+        eventAdapter.notifyDataSetChanged();
+        Log.d("mylog", "my: " + myEvent);
+
+            CollectionReference eventsRef = db.collection("Events");
+            Log.d("mylog", "eventsRef: " + eventsRef);
+
+            eventsRef.add(myEvent)
+                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                        @Override
+                        public void onSuccess(DocumentReference documentReference) {
+                            Log.d("mylog", "DocumentSnapshot added with ID: " + documentReference.getId());
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.w("mylog", "Error adding document", e);
+                        }
+                    });
+        }
+
+    }
+
+
+
