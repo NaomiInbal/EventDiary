@@ -344,31 +344,7 @@ public class MainActivity extends AppCompatActivity {
     private void takePicture() {
 
     }
-    ////TODO put in a thread
-//    //firebase - store the data
-//    // Create a new user with a first and last name
-//    private void CreateData(){
-//        Map<String, Object> event = new HashMap<>();
-//        event.put("name", events.get(0).contactName);
-//        event.put("contact", "Lovelace");
-//
-//
-//        // Add a new document with a generated ID
-//        db.collection("events")
-//                .add(event)
-//                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-//                    @Override
-//                    public void onSuccess(DocumentReference documentReference) {
-//                        Log.d("mylog", "DocumentSnapshot added with ID: " + documentReference.getId());
-//                    }
-//                })
-//                .addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception e) {
-//                        Log.w("mylog", "Error adding document", e);
-//                    }
-//                });
-//    }
+
 //                        private void showNotification ()
 //                        {
 //        Intent intent = new Intent(this, SplashActivity.class);
@@ -402,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
 //            notificationManager.createNotificationChannel(notificationChannel);
 //        }
 
-
+    ////TODO put in a thread
     private void saveEventOnFirestore() {
         //                                       //eventImageBitmap
 ////                        /url =  upload image to Strorage
@@ -429,24 +405,32 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
         }
-        private void readEventsOnFireStore(){
-            db.collection("Events")
-                    .get()
-                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                            if (task.isSuccessful()) {
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-                                    Log.d("mylog", document.getId() + " => " + document.getData());
+    private void readEventsOnFireStore() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                db.collection("Events")
+                        .get()
+                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    for (QueryDocumentSnapshot document : task.getResult()) {
+                                        Log.d("mylog", document.getId() + " => " + document.getData());
+                                    }
+                                } else {
+                                    Log.d("mylog", "Error getting documents.", task.getException());
                                 }
-                            } else {
-                                Log.d("mylog", "Error getting documents.", task.getException());
                             }
-                        }
-                    });
-        }
+                        });
+            }
+        });
 
+        thread.start();
     }
+
+
+}
 
 
 
