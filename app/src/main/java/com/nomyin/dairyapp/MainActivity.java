@@ -34,25 +34,31 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.ktx.Firebase;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PICK_CONTACT = 1;
     private Button btn_addEvent;
+    private Button  btnPrevMonth;
+    private Button btnNextMonth;
+    private TextView MonthTitle;
+
     private ArrayList<MyEvent> events;
     private EventAdapter eventAdapter;
     private ArrayAdapter<String> adapter;
@@ -79,6 +85,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CAMERA_PHOTO = 1;
     private static final int REQUEST_READ_CONTACTS_PERMISSION = 1;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
+    // Calendar instance to get the current month
+    private Calendar calendar;
 
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -91,15 +99,44 @@ public class MainActivity extends AppCompatActivity {
         listView = findViewById(R.id.listView);
         eventAdapter = new EventAdapter(this);
         listView.setAdapter(eventAdapter);
-
+        btnPrevMonth = findViewById(R.id.btnPrevMonthID);
+        btnNextMonth = findViewById(R.id.btnNextMonthID);
+        MonthTitle = findViewById(R.id.MonthTitleID);
         events = new ArrayList();
         listData = new ArrayList<>();
         eventAdapter.events = events;
         eventAdapter.notifyDataSetChanged();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
+        showEvents();
         addNewEvent();
 //        setupNotification();
 //        showNotification();
+
+    }
+
+    private void showEvents() {
+         //Initialize the calendar instance
+         calendar = Calendar.getInstance();
+
+         //navigete between month
+        btnPrevMonth.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Move to the previous month
+                calendar.add(Calendar.MONTH, -1);
+                Log.d("mylog", "prev: "+ Calendar.MONTH);
+                //filterEventsByMonth();
+            }
+        });
+        btnNextMonth.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Move to the next month
+                calendar.add(Calendar.MONTH, 1);
+                Log.d("mylog", "next: "+ Calendar.MONTH);
+               // filterEventsByMonth();
+            }
+        });
 
     }
 
