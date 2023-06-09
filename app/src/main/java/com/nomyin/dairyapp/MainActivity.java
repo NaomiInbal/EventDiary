@@ -2,11 +2,15 @@ package com.nomyin.dairyapp;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import android.Manifest;
 
 //import android.content.DialogInterface;
@@ -49,8 +53,11 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
-
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QuerySnapshot;
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PICK_CONTACT = 1;
     private Button btn_addEvent;
@@ -106,15 +113,70 @@ public class MainActivity extends AppCompatActivity {
         eventAdapter.events = events;
         eventAdapter.notifyDataSetChanged();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
-        showEvents();
+        readEventsOnFireStore();
         addNewEvent();
 //        setupNotification();
 //        showNotification();
 
     }
+    private void readEventsOnFireStore() {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Log.d("TAG", "run: ");
+                db.collection("Events")
+                        .get()
+                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    Log.d("TAG", "run2 ");
+                                    for (QueryDocumentSnapshot document : task.getResult()) {
+                                        Log.d("TAG", document.getId() + " => " + document.getData());
+//                                       TODO convert document tio MyEvent object
+//                                        MyEvent event = document.toObject(MyEvent.class);
+//                                        events.add(event);
+//                                        Log.d("TAG", "onComplete: "+event);
+
+                                    }
+
+                                    Log.d("TAG", "onComplete2: ");
+//                                    filterEventsByMonth();
+
+
+                                } else {
+                                    Log.d("mylog", "Error getting documents.", task.getException());
+                                }
+                            }
+                        });
+            }
+        });
+
+        thread.start();
+    }
+    private void callReadEventsOnFireStore() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("Events")
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                        @Override
+                    public void onEvent(@Nullable QuerySnapshot querySnapshot, @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            Log.d("mylog", "Error getting documents.", e);
+                            return;
+                        }
+
+                        if (querySnapshot != null) {
+                            readEventsOnFireStore();
+                        }
+                    }
+                });
+    }
+
 
 
     private void showEvents() {
+        Log.d("TAG", "showEvents: ");
+        filterEventsByMonth();
         // Initialize the calendar instance
         calendar = Calendar.getInstance();
         // Set the name of the current month
@@ -125,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                 // Move to the previous month
                 calendar.add(Calendar.MONTH, -1);
                 updateMonthTitle();
-                // filterEventsByMonth();
+                filterEventsByMonth();
             }
         });
 
@@ -135,10 +197,54 @@ public class MainActivity extends AppCompatActivity {
                 // Move to the next month
                 calendar.add(Calendar.MONTH, 1);
                 updateMonthTitle();
-                // filterEventsByMonth();
+                filterEventsByMonth();
             }
         });
     }
+
+
+        private void filterEventsByMonth() {
+            Log.d("TAG", "filterEventsByMonth: ");
+            // Create a Calendar instance
+            Calendar calendar = Calendar.getInstance();
+
+            // Get the current month and year
+            int currentMonth = calendar.get(Calendar.MONTH);
+            int currentYear = calendar.get(Calendar.YEAR);
+            Log.d("filter", "filterEventsByMonth: "+ events);
+            ArrayList<MyEvent> currentMonthEvents = new ArrayList<>();
+                Date eventDate;
+            // Filter events by the current month and year
+            for (MyEvent event : events) {
+                Calendar eventCalendar = Calendar.getInstance();
+                Log.d("mylog", "filterEventsByMonth: "+event);
+                //convert string date to object Date
+                eventDate = convertToDate(event);
+                eventCalendar.setTime(eventDate);
+                int eventMonth = eventCalendar.get(Calendar.MONTH);
+                if (eventMonth == currentMonth) {
+                    currentMonthEvents.add(event);
+                }
+            }
+            // Display the current month events in the ListView
+            events.clear();
+            events.addAll(currentMonthEvents);
+            eventAdapter.notifyDataSetChanged();
+        }
+
+    private Date convertToDate(MyEvent event) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        Date date=null;
+        try {
+            date = dateFormat.parse(event.eventDate);
+            // Do something with the converted date
+            // ...
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return date;
+    }
+
 
     private void updateMonthTitle() {
         // Get the name of the current month
@@ -449,29 +555,8 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
         }
-    private void readEventsOnFireStore() {
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                db.collection("Events")
-                        .get()
-                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                            @Override
-                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                if (task.isSuccessful()) {
-                                    for (QueryDocumentSnapshot document : task.getResult()) {
-                                        Log.d("mylog", document.getId() + " => " + document.getData());
-                                    }
-                                } else {
-                                    Log.d("mylog", "Error getting documents.", task.getException());
-                                }
-                            }
-                        });
-            }
-        });
 
-        thread.start();
-    }
+
 
 
 }
