@@ -49,7 +49,6 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -57,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btn_addEvent;
     private Button  btnPrevMonth;
     private Button btnNextMonth;
-    private TextView MonthTitle;
+    private TextView monthTitle;
 
     private ArrayList<MyEvent> events;
     private EventAdapter eventAdapter;
@@ -101,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
         listView.setAdapter(eventAdapter);
         btnPrevMonth = findViewById(R.id.btnPrevMonthID);
         btnNextMonth = findViewById(R.id.btnNextMonthID);
-        MonthTitle = findViewById(R.id.MonthTitleID);
+        monthTitle = findViewById(R.id.MonthTitleID);
         events = new ArrayList();
         listData = new ArrayList<>();
         eventAdapter.events = events;
@@ -114,30 +113,39 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void showEvents() {
-         //Initialize the calendar instance
-         calendar = Calendar.getInstance();
 
-         //navigete between month
+    private void showEvents() {
+        // Initialize the calendar instance
+        calendar = Calendar.getInstance();
+        // Set the name of the current month
+        updateMonthTitle();
         btnPrevMonth.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Move to the previous month
                 calendar.add(Calendar.MONTH, -1);
-                Log.d("mylog", "prev: "+ Calendar.MONTH);
-                //filterEventsByMonth();
+                updateMonthTitle();
+                // filterEventsByMonth();
             }
         });
+
         btnNextMonth.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Move to the next month
                 calendar.add(Calendar.MONTH, 1);
-                Log.d("mylog", "next: "+ Calendar.MONTH);
-               // filterEventsByMonth();
+                updateMonthTitle();
+                // filterEventsByMonth();
             }
         });
+    }
 
+    private void updateMonthTitle() {
+        // Get the name of the current month
+        String monthName = new SimpleDateFormat("MMMM", Locale.getDefault()).format(calendar.getTime());
+
+        // Set the month name in the MonthTitle TextView
+        monthTitle.setText(monthName);
     }
 
     //create the menu
@@ -367,7 +375,6 @@ public class MainActivity extends AppCompatActivity {
         eventDateStr = selectedDate;
 
         saveEventOnFirestore();
-        readEventsOnFireStore();
         //convert string to date
 //                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 //                Date eventDate = null;
