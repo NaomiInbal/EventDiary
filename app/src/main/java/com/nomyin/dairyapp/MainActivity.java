@@ -7,6 +7,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import java.io.ByteArrayOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -26,6 +28,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -52,14 +55,18 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.util.UUID;
+
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PICK_CONTACT = 1;
+    private static final int CAMERA_PERMISSION_REQUEST_CODE =6;
+    private static final int CAMERA_REQUEST_CODE = 7;
     private Button btn_addEvent;
     private Button  btnPrevMonth;
     private Button btnNextMonth;
@@ -70,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<String> adapter;
     private ListView listView;
     private ArrayList<String> listData;
-    private static final int REQUEST_CONTACT_PICKER = 1;
+    private static final int REQUEST_CONTACT_PICKER =5;
     private EditText eventNameInput;
     private DatePicker eventDatePicker;
     private Button chooseContactButton;
@@ -88,8 +95,8 @@ public class MainActivity extends AppCompatActivity {
     private String selectedDate;
     private NotificationManager notificationManager;
     private int nID = 0;
-    private static final int REQUEST_CAMERA_PHOTO = 1;
-    private static final int REQUEST_READ_CONTACTS_PERMISSION = 1;
+    private static final int REQUEST_CAMERA_PHOTO = 3;
+    private static final int REQUEST_READ_CONTACTS_PERMISSION = 4;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
     // Calendar instance to get the current month
     private Calendar calendar;
@@ -114,6 +121,8 @@ public class MainActivity extends AppCompatActivity {
         eventAdapter.notifyDataSetChanged();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
         readEventsOnFireStore();
+
+        showEvents();
         addNewEvent();
 //        setupNotification();
 //        showNotification();
@@ -220,6 +229,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("mylog", "filterEventsByMonth: "+event);
                 //convert string date to object Date
                 eventDate = convertToDate(event);
+                if(eventDate==null){//Handle error
+                    continue;
+                }
                 eventCalendar.setTime(eventDate);
                 int eventMonth = eventCalendar.get(Calendar.MONTH);
                 if (eventMonth == currentMonth) {
@@ -235,12 +247,14 @@ public class MainActivity extends AppCompatActivity {
     private Date convertToDate(MyEvent event) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         Date date=null;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         try {
             date = dateFormat.parse(event.eventDate);
             // Do something with the converted date
             // ...
         } catch (ParseException e) {
             e.printStackTrace();
+            return date;
         }
         return date;
     }
@@ -358,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
         eventDateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                createCalander();
+                createCalender();
             }
         });
 
@@ -450,7 +464,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void createCalander() {
+    private void createCalender() {
         // Create a Calendar instance
         Calendar calendar = Calendar.getInstance();
 
