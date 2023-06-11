@@ -121,7 +121,6 @@ public class MainActivity extends AppCompatActivity {
         eventAdapter.notifyDataSetChanged();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
         readEventsOnFireStore();
-
         showEvents();
         addNewEvent();
 //        setupNotification();
@@ -142,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
                                     Log.d("TAG", "run2 ");
                                     for (QueryDocumentSnapshot document : task.getResult()) {
                                         Log.d("TAG", document.getId() + " => " + document.getData());
-//                                       TODO convert document tio MyEvent object
+//                                       TODO convert document to MyEvent object
 //                                        MyEvent event = document.toObject(MyEvent.class);
 //                                        events.add(event);
 //                                        Log.d("TAG", "onComplete: "+event);
@@ -206,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
                 // Move to the next month
                 calendar.add(Calendar.MONTH, 1);
                 updateMonthTitle();
+                Log.d("TAG", "onClick: ");
                 filterEventsByMonth();
             }
         });
@@ -245,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
     private Date convertToDate(MyEvent event) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        Log.d("TAG", "convertToDate: ");
         Date date=null;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         try {
@@ -263,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
     private void updateMonthTitle() {
         // Get the name of the current month
         String monthName = new SimpleDateFormat("MMMM", Locale.getDefault()).format(calendar.getTime());
-
+        Log.d("logii", "updateMonthTitle: "+ monthName);
         // Set the month name in the MonthTitle TextView
         monthTitle.setText(monthName);
     }
@@ -393,8 +393,24 @@ public class MainActivity extends AppCompatActivity {
         layout.addView(eventDateButton);
         layout.addView(eventNoteInput);
         //TODO add an image
-//        layout.addView(eventImageView);
+////        layout.addView(eventImageView);
+//        // Add button to capture a picture
+//        Button captureImageButton = new Button(this);
+//        captureImageButton.setText("Capture Image");
+//        captureImageButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                // Check camera permission
+//                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+//                    takePicture();
+//                } else {
+//                    // Request camera permission
+//                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+//                }
+//            }
+//        });
 
+//        layout.addView(captureImageButton);
         // Set up the buttons
         builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             @Override
@@ -423,6 +439,13 @@ public class MainActivity extends AppCompatActivity {
                 //dialog.setCanceledOnTouchOutside(false);
             }
         }
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                takePicture();
+            } else {
+                Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void openContactPicker() {
@@ -449,7 +472,64 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
+            Log.d("TAG", "onActivityResult: camera");
+            // Handle the captured image
+            if (data != null) {
+                // Get the image from the intent data
+                eventImageBitmap = (Bitmap) data.getExtras().get("data");
+                Log.d("TAG", "camera: ");
+                // store the image in firestorege
+               // uploadImageToFirebaseStorage(eventImageBitmap);
+//                TODO load the picture, save the url , store on firebase the complete event
+                // ...
+            }
+        }
     }
+//    private void uploadImageToFirebaseStorage(Bitmap imageBitmap) {
+//        // Create a unique filename for the image
+//        String filename = UUID.randomUUID().toString() + ".jpg";
+//
+//        // Get a reference to the Firebase Storage root
+//        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+//
+//        // Create a reference to the file location in Firebase Storage
+//        StorageReference imageRef = storageRef.child("images/" + filename);
+//
+//        // Convert the Bitmap to a byte array
+//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+//        byte[] imageData = baos.toByteArray();
+//
+//        // Upload the byte array to Firebase Storage
+//        UploadTask uploadTask = imageRef.putBytes(imageData);
+//
+//        // Register an upload listener to track the upload progress and handle the result
+//        uploadTask.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+//            @Override
+//            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+//                if (task.isSuccessful()) {
+//                    // Image upload successful
+//                    // Get the download URL of the uploaded image
+//                    imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//                        @Override
+//                        public void onSuccess(Uri uri) {
+//                            // Handle the image URL
+//                            eventImageUrl = uri.toString();
+//                            Log.d("im", "Image URL: eventImageUrl " + eventImageUrl);
+//
+//                            // TODO: Save the image URL to your database or perform any other required actions
+//                        }
+//                    });
+//                } else {
+//                    // Image upload failed
+//                    Log.e("im", "Image upload failed: " + task.getException());
+//                    // TODO: Handle the failure scenario
+//                }
+//            }
+//        });
+//    }
+
 
     private void permissionContacts() {
         // Request permission to read contacts
@@ -506,10 +586,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void takePicture() {
+        Log.d("TAG", "takePicture: ");
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+                Log.d("TAG", "if ");
+                startActivityForResult(takePictureIntent, CAMERA_REQUEST_CODE);
 
-    }
+                // onActivityResult( CAMERA_REQUEST_CODE, RESULT_OK,takePictureIntent);
+            } else {
+                Toast.makeText(this, "No camera app found", Toast.LENGTH_SHORT).show();
+            }
+        }
 
-//                        private void showNotification ()
+   //                        private void showNotification ()
 //                        {
 //        Intent intent = new Intent(this, SplashActivity.class);
 //        PendingIntent pendingIntent = PendingIntent.getActivity(this,0,intent, 0);

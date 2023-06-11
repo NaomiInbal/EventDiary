@@ -8,7 +8,6 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.zip.Inflater;
 
 public class EventAdapter extends BaseAdapter {
 
@@ -46,7 +45,7 @@ public class EventAdapter extends BaseAdapter {
 
             MyEvent event = events.get(position);
             ((TextView) convertView.findViewById(R.id.eventName)).setText(event.eventName);
-            convertView.findViewById(R.id.btnDelete).setOnClickListener(v -> {
+            convertView.findViewById(R.id.btnDetails).setOnClickListener(v -> {
                 events.remove(position);
                 notifyDataSetChanged();
             });
