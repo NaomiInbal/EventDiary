@@ -82,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
     private DatePicker eventDatePicker;
     private Button chooseContactButton;
     private Button eventDateButton;
+    private  Button captureImageButton;
     private String selectedContactName;
     private static final int REQUEST_IMAGE_PICKER = 2;
     private EditText eventNoteInput;
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
     private Bitmap eventImageBitmap;
     private String eventImageUrl;
     private String eventName;
+
     private String eventContactName;
     private String eventDateStr;
     private String eventNote;
@@ -378,13 +380,18 @@ public class MainActivity extends AppCompatActivity {
 
         eventNoteInput = new EditText(this);
         eventNoteInput.setHint("Notes:");
-
-        eventImageView = new ImageView(this);
-        eventImageView.setOnClickListener(new View.OnClickListener() {
+        captureImageButton = new Button(this);
+        captureImageButton.setText("Take a picture");
+        captureImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                takePicture(); // Start the camera activity
-
+                // Check camera permission
+                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    takePicture();
+                } else {
+                    // Request camera permission
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+                }
             }
         });
 
@@ -392,25 +399,7 @@ public class MainActivity extends AppCompatActivity {
         layout.addView(chooseContactButton);
         layout.addView(eventDateButton);
         layout.addView(eventNoteInput);
-        //TODO add an image
-////        layout.addView(eventImageView);
-//        // Add button to capture a picture
-//        Button captureImageButton = new Button(this);
-//        captureImageButton.setText("Capture Image");
-//        captureImageButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                // Check camera permission
-//                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-//                    takePicture();
-//                } else {
-//                    // Request camera permission
-//                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
-//                }
-//            }
-//        });
-
-//        layout.addView(captureImageButton);
+        layout.addView(captureImageButton);
         // Set up the buttons
         builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             @Override
@@ -480,55 +469,53 @@ public class MainActivity extends AppCompatActivity {
                 eventImageBitmap = (Bitmap) data.getExtras().get("data");
                 Log.d("TAG", "camera: ");
                 // store the image in firestorege
-               // uploadImageToFirebaseStorage(eventImageBitmap);
-//                TODO load the picture, save the url , store on firebase the complete event
+                uploadImageToFirebaseStorage(eventImageBitmap);
                 // ...
             }
         }
     }
-//    private void uploadImageToFirebaseStorage(Bitmap imageBitmap) {
-//        // Create a unique filename for the image
-//        String filename = UUID.randomUUID().toString() + ".jpg";
-//
-//        // Get a reference to the Firebase Storage root
-//        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
-//
-//        // Create a reference to the file location in Firebase Storage
-//        StorageReference imageRef = storageRef.child("images/" + filename);
-//
-//        // Convert the Bitmap to a byte array
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-//        byte[] imageData = baos.toByteArray();
-//
-//        // Upload the byte array to Firebase Storage
-//        UploadTask uploadTask = imageRef.putBytes(imageData);
-//
-//        // Register an upload listener to track the upload progress and handle the result
-//        uploadTask.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-//            @Override
-//            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-//                if (task.isSuccessful()) {
-//                    // Image upload successful
-//                    // Get the download URL of the uploaded image
-//                    imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-//                        @Override
-//                        public void onSuccess(Uri uri) {
-//                            // Handle the image URL
-//                            eventImageUrl = uri.toString();
-//                            Log.d("im", "Image URL: eventImageUrl " + eventImageUrl);
-//
-//                            // TODO: Save the image URL to your database or perform any other required actions
-//                        }
-//                    });
-//                } else {
-//                    // Image upload failed
-//                    Log.e("im", "Image upload failed: " + task.getException());
-//                    // TODO: Handle the failure scenario
-//                }
-//            }
-//        });
-//    }
+    private void uploadImageToFirebaseStorage(Bitmap imageBitmap) {
+        //TODO thread
+        // Create a unique filename for the image
+        String filename = UUID.randomUUID().toString() + ".jpg";
+
+        // Get a reference to the Firebase Storage root
+        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+
+        // Create a reference to the file location in Firebase Storage
+        StorageReference imageRef = storageRef.child("images/" + filename);
+
+        // Convert the Bitmap to a byte array
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageData = baos.toByteArray();
+
+        // Upload the byte array to Firebase Storage
+        UploadTask uploadTask = imageRef.putBytes(imageData);
+
+        // Register an upload listener to track the upload progress and handle the result
+        uploadTask.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                if (task.isSuccessful()) {
+                    // Image upload successful
+                    // Get the download URL of the uploaded image
+                    imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            // Handle the image URL
+                            eventImageUrl = uri.toString();
+                            Log.d("immmmmmm", "Image URL: eventImageUrl " + eventImageUrl);
+                        }
+                    });
+                } else {
+                    // Image upload failed
+                    Log.e("immmmmmm", "Image upload failed: " + task.getException());
+                    // TODO: Handle the failure scenario
+                }
+            }
+        });
+    }
 
 
     private void permissionContacts() {
@@ -575,14 +562,7 @@ public class MainActivity extends AppCompatActivity {
         eventDateStr = selectedDate;
 
         saveEventOnFirestore();
-        //convert string to date
-//                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-//                Date eventDate = null;
-//                try {
-//                    eventDate = sdf.parse(eventDateStr);
-//                } catch (ParseException e) {
-//                    e.printStackTrace();
-//                }
+
     }
 
     private void takePicture() {
@@ -637,6 +617,11 @@ public class MainActivity extends AppCompatActivity {
 ////                        /url =  upload image to Strorage
 ////built new event with the url     }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Log.d("saveEvent", "saveEventOnFirestore: "+"eventName='" + eventName + '\'' +
+                ", eventContactName='" + eventContactName+ '\'' +
+                ", eventDateStr='" + eventDateStr + '\'' +
+                ", eventNote='" + eventNote + '\'' +
+                ", eventImageUrl='" + eventImageUrl + '\'');
         MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
         events.add(myEvent);
 

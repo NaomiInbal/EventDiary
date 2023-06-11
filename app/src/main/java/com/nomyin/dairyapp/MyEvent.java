@@ -8,7 +8,10 @@ public class MyEvent {
     String eventDate;
     String eventNote;
     String eventImageURL;
-//    Contact contact;
+
+
+
+
 
     public String getEventName() {
         return eventName;
