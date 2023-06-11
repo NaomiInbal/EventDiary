@@ -10,7 +10,7 @@ import android.os.Handler;
 
 public class SplashActivity extends AppCompatActivity {
     //TODO 5000
-    private static final long DELAY_MS = 1000; // 5 seconds delay
+    private static final long DELAY_MS = 2000; // 5 seconds delay
     private BroadcastReceiver myReceiver;
 
     private IntentFilter filter;
