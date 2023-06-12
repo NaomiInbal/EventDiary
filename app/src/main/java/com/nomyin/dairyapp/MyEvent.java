@@ -2,12 +2,14 @@ package com.nomyin.dairyapp;
 
 import android.util.Log;
 
+import com.google.firebase.storage.StorageReference;
+
 public class MyEvent {
     String eventName;
     String contactName;
     String eventDate;
     String eventNote;
-    String eventImageURL;
+    StorageReference eventImageUrl;
 
 
 
@@ -33,8 +35,8 @@ public class MyEvent {
         this.eventNote = eventNote;
     }
 
-    public void setEventImageURL(String eventImageURL) {
-        this.eventImageURL = eventImageURL;
+    public void setEventImageUrl(StorageReference eventImageUrl) {
+        this.eventImageUrl = eventImageUrl;
     }
 
     public String getContactName() {
@@ -49,15 +51,15 @@ public class MyEvent {
         return eventNote;
     }
 
-    public String getEventImageURL() {
-        return eventImageURL;
+    public StorageReference getEventImageUrl() {
+        return eventImageUrl;
     }
 
-    public MyEvent(String eventName, String contactName, String eventDate, String eventNote, String eventImageURL) {
+    public MyEvent(String eventName, String contactName, String eventDate, String eventNote, StorageReference eventImageURL) {
         this.eventName = eventName;
         this.eventDate =eventDate;
         this.contactName = contactName;
-        this.eventImageURL = eventImageURL;
+        this.eventImageUrl = eventImageURL;
         this.eventNote = eventNote;
         Log.d("mylog", "MyEvent: "+ eventName+ " "+ eventNote+" " + eventDate +" "+ contactName);
     }
@@ -69,7 +71,7 @@ public class MyEvent {
                     ", eventContactName='" + contactName + '\'' +
                     ", eventDateStr='" + eventDate + '\'' +
                     ", eventNote='" + eventNote + '\'' +
-                    ", eventImageUrl='" + eventImageURL + '\'' +
+                    ", eventImageUrl='" + eventImageUrl + '\'' +
                     '}';
         }
     }

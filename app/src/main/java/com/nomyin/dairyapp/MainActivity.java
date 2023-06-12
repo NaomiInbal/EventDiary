@@ -88,7 +88,9 @@ public class MainActivity extends AppCompatActivity {
     private EditText eventNoteInput;
     private ImageView eventImageView;
     private Bitmap eventImageBitmap;
-    private String eventImageUrl;
+    //private String eventImageUrl;
+    private StorageReference eventImageUrl;
+
     private String eventName;
 
     private String eventContactName;
@@ -353,7 +355,8 @@ public class MainActivity extends AppCompatActivity {
         eventName = "";
         eventContactName = "";
         eventNote = "";
-        eventImageUrl = "";
+        //TODO try save event wuth not take a picture and see what happened
+        eventImageUrl = null;
         selectedDate = "";
 
         eventNameInput = new EditText(this);
@@ -468,9 +471,7 @@ public class MainActivity extends AppCompatActivity {
                 // Get the image from the intent data
                 eventImageBitmap = (Bitmap) data.getExtras().get("data");
                 Log.d("TAG", "camera: ");
-                // store the image in firestorege
-               // uploadImageToFirebaseStorage(eventImageBitmap);
-                // ...
+                // store the image in firestorege - on "save" button clicked
             }
         }
     }
@@ -504,9 +505,10 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(Uri uri) {
                             // Handle the image URL
-                            eventImageUrl = uri.toString();
-                            Log.d("immmmmmm", "Image URL: eventImageUrl " + eventImageUrl);
-                            //Store the complete event
+                            StorageReference imageStorageRef = FirebaseStorage.getInstance().getReferenceFromUrl(uri.toString());
+                            //Store the imageStorageRef as a reference
+                            eventImageUrl = imageStorageRef;
+                            //Store the complete event with URL reference
                             saveEventOnFirestore();
                         }
                     });
@@ -563,7 +565,7 @@ public class MainActivity extends AppCompatActivity {
         eventNote = eventNoteInput.getText().toString();
         eventDateStr = selectedDate;
         uploadImageToFirebaseStorage(eventImageBitmap);
-        //saveEventOnFirestore();
+
 
     }
 
@@ -626,11 +628,9 @@ public class MainActivity extends AppCompatActivity {
                 ", eventImageUrl='" + eventImageUrl + '\'');
         MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
         events.add(myEvent);
-
         eventAdapter.notifyDataSetChanged();
         Log.d("mylog", "my: " + myEvent);
-
-
+        //Store on firebase
             db.collection("Events").add(myEvent)
                     .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                         @Override
@@ -645,10 +645,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
         }
-
-
-
-
 }
 
 
