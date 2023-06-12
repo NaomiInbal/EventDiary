@@ -469,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
                 eventImageBitmap = (Bitmap) data.getExtras().get("data");
                 Log.d("TAG", "camera: ");
                 // store the image in firestorege
-                uploadImageToFirebaseStorage(eventImageBitmap);
+               // uploadImageToFirebaseStorage(eventImageBitmap);
                 // ...
             }
         }
@@ -506,6 +506,8 @@ public class MainActivity extends AppCompatActivity {
                             // Handle the image URL
                             eventImageUrl = uri.toString();
                             Log.d("immmmmmm", "Image URL: eventImageUrl " + eventImageUrl);
+                            //Store the complete event
+                            saveEventOnFirestore();
                         }
                     });
                 } else {
@@ -560,8 +562,8 @@ public class MainActivity extends AppCompatActivity {
         eventName = eventNameInput.getText().toString();
         eventNote = eventNoteInput.getText().toString();
         eventDateStr = selectedDate;
-
-        saveEventOnFirestore();
+        uploadImageToFirebaseStorage(eventImageBitmap);
+        //saveEventOnFirestore();
 
     }
 
