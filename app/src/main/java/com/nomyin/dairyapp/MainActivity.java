@@ -355,8 +355,8 @@ public class MainActivity extends AppCompatActivity {
         eventName = "";
         eventContactName = "";
         eventNote = "";
-        //TODO try save event wuth not take a picture and see what happened
-        eventImageUrl = null;
+        //TODO try save event with not take a picture and see what happened
+        //eventImageUrl = null;
         selectedDate = "";
 
         eventNameInput = new EditText(this);
@@ -403,11 +403,16 @@ public class MainActivity extends AppCompatActivity {
         layout.addView(eventDateButton);
         layout.addView(eventNoteInput);
         layout.addView(captureImageButton);
+
         // Set up the buttons
         builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                saveNewEvent();
+                boolean isNewEvent = saveNewEvent();
+                //handle the error if missing fields or upload error
+                    if (!isNewEvent) {
+                        Toast.makeText(MainActivity.this, "The event did not save, please try again", Toast.LENGTH_SHORT).show();
+                    }
             }
         });
 
@@ -475,7 +480,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    private void uploadImageToFirebaseStorage(Bitmap imageBitmap) {
+    private boolean uploadImageToFirebaseStorage(Bitmap imageBitmap) {
+        boolean[] isUploadImageToFirebaseStorage ={true};
         //TODO thread
         // Create a unique filename for the image
         String filename = UUID.randomUUID().toString() + ".jpg";
@@ -509,16 +515,18 @@ public class MainActivity extends AppCompatActivity {
                             //Store the imageStorageRef as a reference
                             eventImageUrl = imageStorageRef;
                             //Store the complete event with URL reference
-                            saveEventOnFirestore();
+                            isUploadImageToFirebaseStorage[0] = saveEventOnFirestore();
                         }
                     });
                 } else {
                     // Image upload failed
                     Log.e("immmmmmm", "Image upload failed: " + task.getException());
                     // TODO: Handle the failure scenario
+                    isUploadImageToFirebaseStorage[0] = false;
                 }
             }
         });
+        return isUploadImageToFirebaseStorage[0];
     }
 
 
@@ -558,15 +566,20 @@ public class MainActivity extends AppCompatActivity {
         datePickerDialog.show();
     }
 
-    private void saveNewEvent() {
+    private boolean saveNewEvent() {
+        boolean isSaved = false;
         //TODO required fields
         //All variables have values, proceed with saving
         eventName = eventNameInput.getText().toString();
         eventNote = eventNoteInput.getText().toString();
         eventDateStr = selectedDate;
-        uploadImageToFirebaseStorage(eventImageBitmap);
-
-
+        boolean isImage = eventImageBitmap != null ;
+        //checks required fields
+        if (!eventName.isEmpty() && !selectedDate.isEmpty() && isImage  && !eventContactName.isEmpty()) {
+        //If all the required lines are not empty or null
+             isSaved = uploadImageToFirebaseStorage(eventImageBitmap);
+        }
+            return isSaved;
     }
 
     private void takePicture() {
@@ -616,7 +629,8 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
     ////TODO put in a thread
-    private void saveEventOnFirestore() {
+    private boolean saveEventOnFirestore() {
+         boolean[] isSaveEventOnFirestore = {true};
         //                                       //eventImageBitmap
 ////                        /url =  upload image to Strorage
 ////built new event with the url     }
@@ -642,8 +656,10 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onFailure(@NonNull Exception e) {
                             Log.w("mylog", "Error adding document", e);
+                            isSaveEventOnFirestore[0] = false;
                         }
                     });
+            return isSaveEventOnFirestore[0];
         }
 }
 
