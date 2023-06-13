@@ -41,11 +41,15 @@ private int selectedInx = 0;
         timePickerTxt.setText(time);
         RadioGroup radioGroup = findViewById(R.id.groupDividerID);
 
-        ((RadioButton) radioGroup.getChildAt(selectIdx)).setChecked(true);
+        RadioButton radioButton = (RadioButton) radioGroup.getChildAt(selectIdx);
+        if (radioButton != null) {
+            radioButton.setChecked(true);
+        }
+
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int i) {
-                RadioButton r = (RadioButton) findViewById(i);
+                RadioButton r = findViewById(i);
                 selectedInx = radioGroup.indexOfChild(r);
                 SharedPreferences.Editor editor = sp.edit();
                 editor.putInt("set1", selectedInx);
