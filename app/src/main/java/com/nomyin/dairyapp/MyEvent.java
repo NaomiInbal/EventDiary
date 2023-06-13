@@ -9,7 +9,7 @@ public class MyEvent {
     String contactName;
     String eventDate;
     String eventNote;
-    StorageReference eventImageUrl;
+    String eventImageUrl;
 
 
 
@@ -35,7 +35,7 @@ public class MyEvent {
         this.eventNote = eventNote;
     }
 
-    public void setEventImageUrl(StorageReference eventImageUrl) {
+    public void setEventImageUrl(String eventImageUrl) {
         this.eventImageUrl = eventImageUrl;
     }
 
@@ -51,15 +51,15 @@ public class MyEvent {
         return eventNote;
     }
 
-    public StorageReference getEventImageUrl() {
+    public String getEventImageUrl() {
         return eventImageUrl;
     }
 
-    public MyEvent(String eventName, String contactName, String eventDate, String eventNote, StorageReference eventImageURL) {
+    public MyEvent(String eventName, String contactName, String eventDate, String eventNote, String eventImageUrl) {
         this.eventName = eventName;
         this.eventDate =eventDate;
         this.contactName = contactName;
-        this.eventImageUrl = eventImageURL;
+        this.eventImageUrl = eventImageUrl;
         this.eventNote = eventNote;
         Log.d("mylog", "MyEvent: "+ eventName+ " "+ eventNote+" " + eventDate +" "+ contactName);
     }

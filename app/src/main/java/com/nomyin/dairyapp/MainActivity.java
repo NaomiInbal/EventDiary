@@ -1,6 +1,7 @@
 package com.nomyin.dairyapp;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -37,8 +38,17 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -84,8 +94,6 @@ public class MainActivity extends AppCompatActivity {
     // Calendar instance to get the current month
     private Calendar calendar;
 
-
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -257,20 +265,25 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 boolean isNewEvent = true;
+                //TODO now picture is not required so if there is not it can be problem to upload
                 boolean isRequiredFields = requiredFields();
-                if(isRequiredFields) {
-                    isNewEvent = saveNewEvent();//add new event
-                    Log.d("Avi", "onClick: save " + isNewEvent);
-                }
-                //handle the error if missing fields or upload error
-               else { //there are empty required fields
-                    Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
-               return;
-
-               }
-               if(!isNewEvent){ //upload error
-                   Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
-               }
+          if(isRequiredFields) {
+                uploadImageToFirebaseStorage(eventImageBitmap, new UploadCallback() {
+                    @Override
+                    public void onUploadComplete(boolean success) {
+                        if (success) {
+                            // Image upload was successful
+                            // Continue with the rest of your code here
+                        } else {
+                            // Image upload failed
+                            Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            } else { //there are empty required fields
+                Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
+                return;
+            }
             }
         });
 
@@ -282,6 +295,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.setCanceledOnTouchOutside(false);
         dialog.show();
     }
+
     //-------------------------------------------------------------------------------------------
     //Helper functions
     //-------------------------------------------------------------------------------------------
@@ -375,42 +389,114 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    //------------------------------------------------------------------------------------
-    //FireBase & FireStore
-    //-------------------------------------------------------------------------------------
-    private boolean saveNewEvent() {
-        boolean isSaved = false;
-        //TODO required fields
-        //All variables have values, proceed with saving
-        eventName = eventNameInput.getText().toString();
-        eventNote = eventNoteInput.getText().toString();
-        eventDateStr = selectedDate;
-        boolean isImage = eventImageBitmap != null ;
-        //checks required fields
-        if (!eventName.isEmpty() && !selectedDate.isEmpty() && isImage  && !eventContactName.isEmpty()) {
-            //If all the required lines are not empty or null
-            isSaved = true;
-           // isSaved = uploadImageToFirebaseStorage(eventImageBitmap);
-        }
-        return isSaved;
-    }
-    //-------------------------------------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------------
     //check if the required Fields are not empty
     private  boolean requiredFields(){
+        //TODO required fields according to if edit or not
         //All variables have values, proceed with saving
         eventName = eventNameInput.getText().toString();
         eventNote = eventNoteInput.getText().toString();
         eventDateStr = selectedDate;
         boolean isImage = eventImageBitmap != null ;
         //checks required fields
-        if (!eventName.isEmpty() && !selectedDate.isEmpty() && isImage  && !eventContactName.isEmpty()) {
+        if (!eventName.isEmpty() && !selectedDate.isEmpty()  && !eventContactName.isEmpty()) {
             return true;//If all the required lines are not empty or null
         }
         else return false;
     }
     //---------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------
+    //FireBase & FireStore
+    //-------------------------------------------------------------------------------------
+    interface UploadCallback {
+        void onUploadComplete(boolean success);
+    }
 
-}
+    private void uploadImageToFirebaseStorage(Bitmap eventImageBitmap, UploadCallback callback) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Create a unique filename for the image (e.g., using a timestamp)
+                    String filename = "event_image_" + System.currentTimeMillis() + ".jpg";
+                    // Get a reference to the Firebase Storage instance and the desired storage location
+                    FirebaseStorage storage = FirebaseStorage.getInstance();
+                    StorageReference storageRef = storage.getReference().child("event_images").child(filename);
+                    // Convert the Bitmap to a byte array
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    eventImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                    byte[] imageData = baos.toByteArray();
+                    // Create an upload task to upload the image to Firestore storage
+                    UploadTask uploadTask = storageRef.putBytes(imageData);
+                    // Register a success listener to get the download URL after the upload is complete
+                    uploadTask.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                            if (task.isSuccessful()) {
+                                // Image upload successful
+                                // Retrieve the download URL for the image
+                                storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri downloadUri) {
+                                        // The download URL is available here
+                                        eventImageUrl = downloadUri.toString();
+                                        Log.d("save", "onSuccess: "+ eventImageUrl);
+                                        // Save the image URL to Firestore or perform any other desired actions
+                                        // saveImageUrlToFirestore(imageUrl);
+                                        callback.onUploadComplete(true);
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        // Error occurred while getting the download URL
+                                        // Handle the error as needed
+                                        Log.d("save", "fai: "+ eventImageUrl);
+
+                                        callback.onUploadComplete(false);
+                                    }
+                                });
+                            } else {
+                                // Image upload failed
+                                // Handle the error as needed
+                                callback.onUploadComplete(false);
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        thread.start();
+    }
+    }
+//--------------------------------------------------------------------------------------------------
+
+
+//        private void saveEventWithImage(String imageUrl) {
+//            // Create a new Event object with the necessary data, including the image URL
+//            MyEvent event = new MyEvent(eventName, eventContactName, eventNote, imageUrl);
+//
+//            // Add the event to the Firestore "Event" collection
+//            eventsCollection.add(event)
+//                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+//                        @Override
+//                        public void onSuccess(DocumentReference documentReference) {
+//                            // Event added successfully to Firestore
+//                            // Handle the success scenario
+//                        }
+//                    })
+//                    .addOnFailureListener(new OnFailureListener() {
+//                        @Override
+//                        public void onFailure(@NonNull Exception e) {
+//                            // Error occurred while adding the event to Firestore
+//                            // Handle the failure scenario
+//                        }
+//                    });
+//        }
+//    }
+
 
 
 
