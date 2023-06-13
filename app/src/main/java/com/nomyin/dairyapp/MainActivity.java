@@ -266,6 +266,7 @@ public class MainActivity extends AppCompatActivity {
                else { //there are empty required fields
                     Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
                return;
+
                }
                if(!isNewEvent){ //upload error
                    Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
