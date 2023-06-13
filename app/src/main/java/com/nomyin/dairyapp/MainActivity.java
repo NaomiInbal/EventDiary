@@ -43,6 +43,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -408,10 +409,10 @@ public class MainActivity extends AppCompatActivity {
     //------------------------------------------------------------------------------------
     //FireBase & FireStore
     //-------------------------------------------------------------------------------------
+    //callback returns if success or failed after the upload complete
     interface UploadCallback {
         void onUploadComplete(boolean success);
     }
-
     private void uploadImageToFirebaseStorage(Bitmap eventImageBitmap, UploadCallback callback) {
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -440,9 +441,9 @@ public class MainActivity extends AppCompatActivity {
                                     public void onSuccess(Uri downloadUri) {
                                         // The download URL is available here
                                         eventImageUrl = downloadUri.toString();
-                                        Log.d("save", "onSuccess: "+ eventImageUrl);
-                                        // Save the image URL to Firestore or perform any other desired actions
-                                        // saveImageUrlToFirestore(imageUrl);
+                                        Log.d("Avi", "onSuccess: "+ eventImageUrl);
+                                        // Save the event
+                                        saveEventOnFirestore();
                                         callback.onUploadComplete(true);
                                     }
                                 }).addOnFailureListener(new OnFailureListener() {
@@ -450,7 +451,7 @@ public class MainActivity extends AppCompatActivity {
                                     public void onFailure(@NonNull Exception e) {
                                         // Error occurred while getting the download URL
                                         // Handle the error as needed
-                                        Log.d("save", "fai: "+ eventImageUrl);
+                                        Log.d("Avi", "failedUploadImage: "+ eventImageUrl);
 
                                         callback.onUploadComplete(false);
                                     }
@@ -470,32 +471,40 @@ public class MainActivity extends AppCompatActivity {
 
         thread.start();
     }
-    }
+
 //--------------------------------------------------------------------------------------------------
+private void saveEventOnFirestore() {
+        //TODO if this function called from thread onSuccess it is in thread too? because it is not done in separate thread
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                Log.d("Avi", "saveEventOnFirestore: " + "eventName='" + eventName + '\'' +
+                        ", eventContactName='" + eventContactName + '\'' +
+                        ", eventDateStr='" + eventDateStr + '\'' +
+                        ", eventNote='" + eventNote + '\'' +
+                        ", eventImageUrl='" + eventImageUrl + '\'');
+                MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
+                events.add(myEvent);
+                eventAdapter.notifyDataSetChanged();
+                Log.d("mylog", "my: " + myEvent);
+                //Store on firebase
+                db.collection("Events").add(myEvent)
+                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Log.d("Avi", "DocumentSnapshot added with ID: " + documentReference.getId());
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w("Avi", "Error adding document", e);
+                            }
+                        });
+
+}
+}
 
 
-//        private void saveEventWithImage(String imageUrl) {
-//            // Create a new Event object with the necessary data, including the image URL
-//            MyEvent event = new MyEvent(eventName, eventContactName, eventNote, imageUrl);
-//
-//            // Add the event to the Firestore "Event" collection
-//            eventsCollection.add(event)
-//                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-//                        @Override
-//                        public void onSuccess(DocumentReference documentReference) {
-//                            // Event added successfully to Firestore
-//                            // Handle the success scenario
-//                        }
-//                    })
-//                    .addOnFailureListener(new OnFailureListener() {
-//                        @Override
-//                        public void onFailure(@NonNull Exception e) {
-//                            // Error occurred while adding the event to Firestore
-//                            // Handle the failure scenario
-//                        }
-//                    });
-//        }
-//    }
+
 
 
 
