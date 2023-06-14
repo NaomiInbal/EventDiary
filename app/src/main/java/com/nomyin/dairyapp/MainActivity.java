@@ -513,6 +513,7 @@ private boolean saveEventOnFirestore() {
                             public void onSuccess(DocumentReference documentReference) {
                                 Log.d("Avi", "DocumentSnapshot added with ID: " + documentReference.getId());
                                 isSaveEventOnFirestore.set(true);
+                                readEventsOnFireStore();
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {
@@ -527,6 +528,7 @@ private boolean saveEventOnFirestore() {
 //---------------------------------------------------------------------------------------------------------------------
 // read events from FB
 private void readEventsOnFireStore() {
+    Log.d("Avi", "readEventsOnFireStore: ");
     Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
@@ -556,7 +558,7 @@ private void readEventsOnFireStore() {
                             }
                             // Notify the adapter that the data has changed
                             eventAdapter.notifyDataSetChanged();
-                            filterEventsByMonth();
+                            filterEventsByMonth(calendar.get(Calendar.MONTH));
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -576,46 +578,43 @@ private void readEventsOnFireStore() {
     //Handle month and date
     //----------------------------------------------------------------------------------------------------------
 private void showEvents() {
-    Log.d("TAG", "showEvents: ");
-    filterEventsByMonth();
-    // Initialize the calendar instance
-    calendar = Calendar.getInstance();
-    // Set the name of the current month
+    filterEventsByMonth(calendar.get(Calendar.MONTH)); // Pass the current month as an argument
     updateMonthTitle();
+
     btnPrevMonth.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            // Move to the previous month
             calendar.add(Calendar.MONTH, -1);
             updateMonthTitle();
-            filterEventsByMonth();
+            filterEventsByMonth(calendar.get(Calendar.MONTH)); // Pass the updated month as an argument
         }
     });
 
     btnNextMonth.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            // Move to the next month
             calendar.add(Calendar.MONTH, 1);
             updateMonthTitle();
-            Log.d("TAG", "onClick: ");
-            filterEventsByMonth();
+            filterEventsByMonth(calendar.get(Calendar.MONTH)); // Pass the updated month as an argument
         }
     });
 }
+
 //---------------------------------------------------------------------------------------------
     //Sort events by month
-    private void filterEventsByMonth() {
+    private void filterEventsByMonth( int currentMonth) {
         Log.d("Avi", "filterEventsByMonth: ");
-        // Create a Calendar instance
-        Calendar calendar = Calendar.getInstance();
-
-        // Get the current month and year
-        int currentMonth = calendar.get(Calendar.MONTH);
-        int currentYear = calendar.get(Calendar.YEAR);
+//        // Create a Calendar instance
+//        Calendar calendar = Calendar.getInstance();
+//
+//        // Get the current month and year
+//        int currentMonth = calendar.get(Calendar.MONTH);
+//        int currentYear = calendar.get(Calendar.YEAR);
         Log.d("Avi", "filterEventsByMonth: "+ currentMonth);
         ArrayList<MyEvent> currentMonthEvents = new ArrayList<>();
         Date eventDate;
+        Log.d("Avi", "current : "+ currentMonthEvents);
+
         // Filter events by the current month and year
         for (MyEvent event : events) {
 //            Calendar eventCalendar = Calendar.getInstance();
