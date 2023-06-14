@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         setupUI();
         initialize();
         //TODO read from firebase and display event on the screen - with thread
-        readEventsOnFirestore();
+        //readEventsOnFirestore();
         showEvents();
         addNewEvent();
 //        setupNotification();
@@ -129,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
         eventAdapter.events = events;
         eventAdapter.notifyDataSetChanged();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
+        readEventsOnFireStore();
     }
     //---------------------------------------------------------------------------------------------
     //create the menu
@@ -332,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
     //open the calendar to choose date
     private void createCalender() {
         // Create a Calendar instance
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar = Calendar.getInstance(); //TODO to declare in mainactivity? use in 2 difference function
 
         // Get the current date values
         int year = calendar.get(Calendar.YEAR);
@@ -525,43 +526,52 @@ private boolean saveEventOnFirestore() {
 }
 //---------------------------------------------------------------------------------------------------------------------
 // read events from FB
-private void readEventsOnFirestore() {
-//    Thread thread = new Thread(new Runnable() {
-//        @Override
-//        public void run() {
-//            // Get the current month
-//            Calendar calendar = Calendar.getInstance();
-//            int currentMonth = calendar.get(Calendar.MONTH);
-//
-//            // TODO: Fetch events from Firestore based on the current month
-//            FirebaseFirestore db = FirebaseFirestore.getInstance();
-//            db.collection("Events")
-//                    .whereEqualTo("eventMonth", currentMonth)
-//                    .get()
-//                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-//                        @Override
-//                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
-//                            if (task.isSuccessful()) {
-//                                // Clear the events list
-//                                events.clear();
-//                                // Iterate through the retrieved documents and create MyEvent objects
-//                                for (QueryDocumentSnapshot document : task.getResult()) {
-//                                    MyEvent event = document.toObject(MyEvent.class);
-//                                    events.add(event);
-//                                }
-//                                // Update the ListView adapter
-//                                eventAdapter.notifyDataSetChanged();
-//                            } else {
-//                                // Handle the error
-//                                Log.e("ReadEvents", "Error getting events: " + task.getException());
-//                            }
-//                        }
-//                    });
-//        }
-//    });
-//
-//    thread.start();
+private void readEventsOnFireStore() {
+    Thread thread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();//TODO to declare in mainactivity? use in 2 difference function
+
+            // Query the "Events" collection in Firestore
+            db.collection("Events")
+                    .get()
+                    .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                        @Override
+                        public void onSuccess(QuerySnapshot querySnapshot) {
+                            // Clear the existing events list
+                            events.clear();
+
+                            // Iterate through the documents in the query snapshot
+                            for (QueryDocumentSnapshot document : querySnapshot) {
+                                // Extract the event details from the document
+                                 eventName = document.getString("eventName");
+                                eventContactName = document.getString("contactName");
+                                eventDateStr = document.getString("eventDate");
+                                 eventNote = document.getString("eventNote");
+                                 eventImageUrl = document.getString("eventImageUrl");
+
+                                // Create a new MyEvent object and add it to the events list
+                                MyEvent event = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
+                                events.add(event);
+                            }
+                            // Notify the adapter that the data has changed
+                            eventAdapter.notifyDataSetChanged();
+                            filterEventsByMonth();
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            // Handle any errors that occur during the Firestore read operation
+                            Log.e("FirebaseFirestore", "Error reading events from Firestore", e);
+                        }
+                    });
+        }
+    });
+
+    thread.start();
 }
+
 //------------------------------------------------------------------------------------------------------------
     //Handle month and date
     //----------------------------------------------------------------------------------------------------------
@@ -596,27 +606,27 @@ private void showEvents() {
 //---------------------------------------------------------------------------------------------
     //Sort events by month
     private void filterEventsByMonth() {
-        Log.d("TAG", "filterEventsByMonth: ");
+        Log.d("Avi", "filterEventsByMonth: ");
         // Create a Calendar instance
         Calendar calendar = Calendar.getInstance();
 
         // Get the current month and year
         int currentMonth = calendar.get(Calendar.MONTH);
         int currentYear = calendar.get(Calendar.YEAR);
-        Log.d("filter", "filterEventsByMonth: "+ events);
+        Log.d("Avi", "filterEventsByMonth: "+ currentMonth);
         ArrayList<MyEvent> currentMonthEvents = new ArrayList<>();
         Date eventDate;
         // Filter events by the current month and year
         for (MyEvent event : events) {
-            Calendar eventCalendar = Calendar.getInstance();
-            Log.d("mylog", "filterEventsByMonth: "+event);
+//            Calendar eventCalendar = Calendar.getInstance();
+            Log.d("Avi", "filterEventsByMonth: "+ event);
             //convert string date to object Date
             eventDate = convertToDate(event);
             if(eventDate==null){//Handle error
                 continue;
             }
-            eventCalendar.setTime(eventDate);
-            int eventMonth = eventCalendar.get(Calendar.MONTH);
+            calendar.setTime(eventDate);
+            int eventMonth = calendar.get(Calendar.MONTH);
             if (eventMonth == currentMonth) {
                 currentMonthEvents.add(event);
             }
@@ -629,13 +639,14 @@ private void showEvents() {
 //---------------------------------------------------------------------------------------------------------
     //convert string date to  object Date
     private Date convertToDate(MyEvent event) {
-        Log.d("TAG", "convertToDate: ");
         Date date=null;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        if(event.eventDate ==null) {
+            return date;
+        }
         try {
             date = dateFormat.parse(event.eventDate);
-            // Do something with the converted date
-            // ...
+
         } catch (ParseException e) {
             e.printStackTrace();
             return date;
