@@ -52,6 +52,7 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_PICK_CONTACT = 1;
@@ -273,6 +274,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onUploadComplete(boolean success) {
                         if (success) {
+                            Log.d("Avi", "onUploadComplete: saved!!!!!! ");
                             // Image upload was successful
                             // Continue with the rest of your code here
                         } else {
@@ -413,67 +415,133 @@ public class MainActivity extends AppCompatActivity {
     interface UploadCallback {
         void onUploadComplete(boolean success);
     }
-    private void uploadImageToFirebaseStorage(Bitmap eventImageBitmap, UploadCallback callback) {
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // Create a unique filename for the image (e.g., using a timestamp)
-                    String filename = "event_image_" + System.currentTimeMillis() + ".jpg";
-                    // Get a reference to the Firebase Storage instance and the desired storage location
-                    FirebaseStorage storage = FirebaseStorage.getInstance();
-                    StorageReference storageRef = storage.getReference().child("event_images").child(filename);
-                    // Convert the Bitmap to a byte array
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    eventImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                    byte[] imageData = baos.toByteArray();
-                    // Create an upload task to upload the image to Firestore storage
-                    UploadTask uploadTask = storageRef.putBytes(imageData);
-                    // Register a success listener to get the download URL after the upload is complete
-                    uploadTask.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                            if (task.isSuccessful()) {
-                                // Image upload successful
-                                // Retrieve the download URL for the image
-                                storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                    @Override
-                                    public void onSuccess(Uri downloadUri) {
-                                        // The download URL is available here
-                                        eventImageUrl = downloadUri.toString();
-                                        Log.d("Avi", "onSuccess: "+ eventImageUrl);
-                                        // Save the event
-                                        saveEventOnFirestore();
-                                        callback.onUploadComplete(true);
-                                    }
-                                }).addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        // Error occurred while getting the download URL
-                                        // Handle the error as needed
-                                        Log.d("Avi", "failedUploadImage: "+ eventImageUrl);
+//    private void uploadImageToFirebaseStorage(Bitmap eventImageBitmap, UploadCallback callback) {
+//        Thread thread = new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    // Create a unique filename for the image (e.g., using a timestamp)
+//                    String filename = "event_image_" + System.currentTimeMillis() + ".jpg";
+//                    // Get a reference to the Firebase Storage instance and the desired storage location
+//                    FirebaseStorage storage = FirebaseStorage.getInstance();
+//                    StorageReference storageRef = storage.getReference().child("event_images").child(filename);
+//                    // Convert the Bitmap to a byte array
+//                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//                    eventImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+//                    byte[] imageData = baos.toByteArray();
+//                    // Create an upload task to upload the image to Firestore storage
+//                    UploadTask uploadTask = storageRef.putBytes(imageData);
+//                    // Register a success listener to get the download URL after the upload is complete
+//                    uploadTask.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+//                        @Override
+//                        public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+//                            if (task.isSuccessful()) {
+//                                // Image upload successful
+//                                // Retrieve the download URL for the image
+//                                storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//                                    @Override
+//                                    public void onSuccess(Uri downloadUri) {
+//                                        // The download URL is available here
+//                                        eventImageUrl = downloadUri.toString();
+//                                        Log.d("Avi", "onSuccess: "+ eventImageUrl);
+//                                        // Save the event
+//                                        saveEventOnFirestore();
+//                                        callback.onUploadComplete(true);
+//                                    }
+//                                }).addOnFailureListener(new OnFailureListener() {
+//                                    @Override
+//                                    public void onFailure(@NonNull Exception e) {
+//                                        // Error occurred while getting the download URL
+//                                        // Handle the error as needed
+//                                        Log.d("Avi", "failedUploadImage: "+ eventImageUrl);
+//
+//                                        callback.onUploadComplete(false);
+//                                    }
+//                                });
+//                            } else {
+//                                // Image upload failed
+//                                // Handle the error as needed
+//                                callback.onUploadComplete(false);
+//                            }
+//                        }
+//                    });
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+//
+//        thread.start();
+//    }
+private void uploadImageToFirebaseStorage(Bitmap eventImageBitmap, UploadCallback callback) {
+    Thread thread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                // Create a unique filename for the image (e.g., using a timestamp)
+                String filename = "event_image_" + System.currentTimeMillis() + ".jpg";
+                // Get a reference to the Firebase Storage instance and the desired storage location
+                FirebaseStorage storage = FirebaseStorage.getInstance();
+                StorageReference storageRef = storage.getReference().child("event_images").child(filename);
+                // Convert the Bitmap to a byte array
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                eventImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                byte[] imageData = baos.toByteArray();
+                // Create an upload task to upload the image to Firestore storage
+                UploadTask uploadTask = storageRef.putBytes(imageData);
 
+                uploadTask.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            // Image upload successful
+                            // Retrieve the download URL for the image
+                            storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri downloadUri) {
+                                    // The download URL is available here
+                                    eventImageUrl = downloadUri.toString();
+                                    // Save the event
+                                    boolean saveSuccess = saveEventOnFirestore();
+                                    Log.d("Avi", "onSuccess: saveSuccess:"+ saveSuccess +"eventImageUrl "+ eventImageUrl);
+
+                                    if (saveSuccess) {
+                                        callback.onUploadComplete(true);
+                                    } else {
                                         callback.onUploadComplete(false);
                                     }
-                                });
-                            } else {
-                                // Image upload failed
-                                // Handle the error as needed
-                                callback.onUploadComplete(false);
-                            }
+                                }
+                            }).addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    // Error occurred while getting the download URL
+                                    // Handle the error as needed
+                                    Log.d("Avi", "failedUploadImage: " + eventImageUrl);
+                                    callback.onUploadComplete(false);
+                                }
+                            });
+                        } else {
+                            // Image upload failed
+                            // Handle the error as needed
+                            callback.onUploadComplete(false);
                         }
-                    });
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                callback.onUploadComplete(false);
+
             }
-        });
+        }
+    });
 
-        thread.start();
-    }
+    thread.start();
+}
 
-//--------------------------------------------------------------------------------------------------
-private void saveEventOnFirestore() {
+
+    //--------------------------------------------------------------------------------------------------
+private boolean saveEventOnFirestore() {
+    AtomicBoolean isSaveEventOnFirestore = new AtomicBoolean(false);
         //TODO if this function called from thread onSuccess it is in thread too? because it is not done in separate thread
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
                 Log.d("Avi", "saveEventOnFirestore: " + "eventName='" + eventName + '\'' +
@@ -491,15 +559,17 @@ private void saveEventOnFirestore() {
                             @Override
                             public void onSuccess(DocumentReference documentReference) {
                                 Log.d("Avi", "DocumentSnapshot added with ID: " + documentReference.getId());
+                                isSaveEventOnFirestore.set(true);
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
                                 Log.w("Avi", "Error adding document", e);
+
                             }
                         });
-
+    return isSaveEventOnFirestore.get();
 }
 }
 
