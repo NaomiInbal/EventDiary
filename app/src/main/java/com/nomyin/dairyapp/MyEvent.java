@@ -62,7 +62,7 @@ public class MyEvent {
     }
 
     //constructor without eventID parameter
-    public MyEvent(String eventName, String contactName, String eventDate, String eventNote, String eventImageUrl) {
+    public MyEvent(String eventName, String contactName, String eventDate,String eventDateDayBefore, String eventDateWeekBefore, String eventNote, String eventImageUrl) {
         this.eventName = eventName;
         this.eventDate = eventDate;
         this.contactName = contactName;

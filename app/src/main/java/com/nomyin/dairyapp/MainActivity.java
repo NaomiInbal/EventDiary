@@ -93,6 +93,9 @@ private int currentMonth;
 
     private String eventContactName;
     private String eventDateStr;
+    String eventDateDayBefore;
+    String eventDateWeekBefore;
+
     private String eventNote;
     private String selectedDate;
     private NotificationManager notificationManager;
@@ -227,7 +230,9 @@ private int currentMonth;
         //TODO try save event with not take a picture and see what happened
         eventImageUrl = "";
         selectedDate = "";
-        //set the name
+        eventDateDayBefore="";
+        eventDateWeekBefore="";
+                //set the name
         eventNameInput = new EditText(this);
         eventNameInput.setHint("Enter event name");
         //set the contact
@@ -423,6 +428,35 @@ private int currentMonth;
         }
         else return false;
     }
+
+    public static String getPreviousDay(String currentDate) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        try {
+            Date date = dateFormat.parse(currentDate);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            calendar.add(Calendar.DAY_OF_MONTH, -1);
+            return dateFormat.format(calendar.getTime());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getPreviousWeek(String currentDate) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        try {
+            Date date = dateFormat.parse(currentDate);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            calendar.add(Calendar.WEEK_OF_YEAR, -1);
+            return dateFormat.format(calendar.getTime());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     //---------------------------------------------------------------------------------------------------
     //------------------------------------------------------------------------------------
     //FireBase & FireStore
@@ -500,17 +534,18 @@ private void uploadImageToFirebaseStorage(Bitmap eventImageBitmap, UploadCallbac
 
     //--------------------------------------------------------------------------------------------------
 private boolean saveEventOnFirestore() {
+    eventDateDayBefore = getPreviousDay(eventDateStr);//
+    eventDateWeekBefore = getPreviousWeek(eventDateStr);
     AtomicBoolean isSaveEventOnFirestore = new AtomicBoolean(false);
         //TODO if this function called from thread onSuccess it is in thread too? because it is not done in separate thread
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
                 Log.d("Avi", "saveEventOnFirestore: " + "eventName='" + eventName + '\'' +
                         ", eventContactName='" + eventContactName + '\'' +
-                        ", eventDateStr='" + eventDateStr + '\'' +
-                        ", eventNote='" + eventNote + '\'' +
+                        ", eventDateStr='" + eventDateStr + '\n' + "eventDateDayBefore" + eventDateDayBefore + '\'' +
+                         "eventDateWeekBefore"+ eventDateWeekBefore + "eventNote=" + eventNote + '\'' +
                         ", eventImageUrl='" + eventImageUrl + '\'');
-                MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
-
-    Log.d("mylog", "my: " + myEvent);
+                MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr,eventDateDayBefore, eventDateWeekBefore , eventNote, eventImageUrl);
+                Log.d("mylog", "my: " + myEvent);
                 //Store on firebase
                 db.collection("Events").add(myEvent)
                         .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
@@ -560,11 +595,13 @@ private void readEventsOnFireStore() {
                                  eventName = document.getString("eventName");
                                 eventContactName = document.getString("contactName");
                                 eventDateStr = document.getString("eventDate");
-                                 eventNote = document.getString("eventNote");
+                                eventDateDayBefore =document.getString("eventDateDayBefore");
+                                eventDateWeekBefore = document.getString("eventDateWeekBefore");
+                                eventNote = document.getString("eventNote");
                                  eventImageUrl = document.getString("eventImageUrl");
 
                                 // Create a new MyEvent object and add it to the events list
-                                MyEvent event = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
+                                MyEvent event = new MyEvent(eventName, eventContactName, eventDateStr, eventDateDayBefore, eventDateWeekBefore, eventNote, eventImageUrl);
                                 events.add(event);
                             }
                             // Notify the adapter that the data has changed
@@ -572,8 +609,6 @@ private void readEventsOnFireStore() {
                             allEvents.addAll(events);//copy the events
 
                             filterEventsByMonth();
-
-
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -644,8 +679,6 @@ private void showEvents() {
         // Display the current month events in the ListView
         events.clear();
         events.addAll(currentMonthEvents);
-        Log.d("edit", "filterEventsByMonth: current"+events);
-        Log.d("edit", "filterEventsByMonth: events"+events);
         eventAdapter.notifyDataSetChanged();
     }
 //---------------------------------------------------------------------------------------------------------
