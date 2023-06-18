@@ -38,6 +38,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -59,7 +60,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements EventAdapter.EventClickListener {
     private static final int REQUEST_PICK_CONTACT = 1;
     private static final int CAMERA_PERMISSION_REQUEST_CODE =6;
     private static final int CAMERA_REQUEST_CODE = 7;
@@ -132,6 +133,9 @@ private int currentMonth;
         eventAdapter.notifyDataSetChanged();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
         readEventsOnFireStore();
+        eventAdapter.setEventDetailsClickListener(MainActivity.this);
+       // eventAdapter.setEventEditClickListener(MainActivity.this);
+
     }
     //---------------------------------------------------------------------------------------------
     //create the menu
@@ -617,13 +621,10 @@ private void showEvents() {
         Calendar calendar = Calendar.getInstance();
         // Get the current month and year
       //  int curretMonth = calendar.get(Calendar.MONTH); gives the real date
-        Log.d("currentMonth", "filterEventsByMonth: "+ allEvents);
-        Log.d("currentMonth", "filterEventsByMonth: "+ currentMonth);
         ArrayList<MyEvent> currentMonthEvents = new ArrayList<>();
         Date eventDate;
         // Filter events by the current month and year
         for (MyEvent event : allEvents) {
-            Log.d("currentMonth", "filterEventsByMonth: "+ event);
             //convert string date to object Date
             eventDate = convertToDate(event);
             if(eventDate==null){//Handle error
@@ -631,12 +632,10 @@ private void showEvents() {
             }
             calendar.setTime(eventDate);
             int eventMonth = calendar.get(Calendar.MONTH)+1;
-            Log.d("currentMonth", "eventMonth "+ eventMonth);
             if (eventMonth == currentMonth) {
                 currentMonthEvents.add(event);
             }
         }
-        Log.d("currentMonth", "currentMonthEvents "+ currentMonthEvents);
 
         // Display the current month events in the ListView
         events.clear();
@@ -662,16 +661,47 @@ private void showEvents() {
     }
 
 //-----------------------------------------------------------------------------------------------------------
-    //display the name of the month
+    // change the current month and display the name of the month
     private void updateMonth() {
         // Get the name of the current month
         String monthName = new SimpleDateFormat("MMMM", Locale.getDefault()).format(calendar.getTime());
         currentMonth = calendar.get(Calendar.MONTH)+1;
-
-        Log.d("currentMonth", "updateMonthTitle: "+ monthName + currentMonth);
         // Set the month name in the MonthTitle TextView
         monthTitle.setText(monthName);
     }
+    //------------------------------------------------------------------------------------------------
+    //show details of exists event
+        public void onEventClick(MyEvent event) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Event Details");
+            builder.setMessage("Event Name: " + event.eventName + "\n Contact: " + event.contactName + "\n Date: " + event.eventDate + "\n Notes: " + event.eventNote);
+
+            // Create a ImageView to display the image
+            ImageView imageView = new ImageView(this);
+            imageView.setLayoutParams(new LinearLayout.LayoutParams(400, 400));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            imageView.setAdjustViewBounds(true);
+
+            // Load the image using Glide or Picasso
+            Glide.with(this).load(event.eventImageUrl).into(imageView);
+
+            // Add the ImageView to the dialog's layout
+            LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.addView(imageView);
+
+            builder.setView(layout);
+            builder.setPositiveButton("OK", null);
+            builder.show();
+        }
+        //---------------------------------------------------------------------------------
+       //edit exists event
+        public void onEventEditClick(MyEvent event) {
+            // Handle the edit button click for the specific event
+            // Implement your logic here to open the edit screen or perform any other actions
+        }
+
+
 }
 
 
