@@ -25,6 +25,7 @@ import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.text.InputType;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -521,6 +522,7 @@ private boolean saveEventOnFirestore() {
                             @Override
                             public void onSuccess(DocumentReference documentReference) {
                                 Log.d("Avi", "DocumentSnapshot added with ID: " + documentReference.getId());
+                                //TODO edd the id to the event to use it to edit the event
                                 isSaveEventOnFirestore.set(true);
                             }
                         })
@@ -689,7 +691,13 @@ private void showEvents() {
             LinearLayout layout = new LinearLayout(this);
             layout.setOrientation(LinearLayout.VERTICAL);
             layout.addView(imageView);
-
+            builder.setView(layout);
+            builder.setPositiveButton("Edit", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    showEditDialog(event);
+                }
+            });
             builder.setView(layout);
             builder.setPositiveButton("OK", null);
             builder.show();
@@ -700,6 +708,121 @@ private void showEvents() {
             // Handle the edit button click for the specific event
             // Implement your logic here to open the edit screen or perform any other actions
         }
+//----------------------------------------------------------------------------------
+private void showEditDialog(MyEvent event) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle("Add New Event");
+    builder.setMessage("All The Fields Are Required Except Note ");
+    // Set up the input fields
+    LinearLayout layout = new LinearLayout(this);
+    layout.setOrientation(LinearLayout.VERTICAL);
+
+
+    // Set the initial values in the EditText fields
+    //eventNameInput.setText(event.eventName);
+    eventNameInput.setHint(event.eventName);
+    //set the contact
+
+    chooseContactButton.setText(event.contactName);
+    chooseContactButton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            permissionContacts();//get permission to use contact
+        }
+    });
+    //set the date
+    eventDateButton.setText(event.eventDate);
+    eventDateButton.setInputType(InputType.TYPE_NULL);
+    eventDateButton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            createCalender();//open the calendar
+        }
+    });
+    //set the note
+
+    eventNoteInput.setHint(event.eventNote);
+    //set the picture
+    captureImageButton.setText("Take a picture");
+    captureImageButton.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            // Check camera permission
+            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                takePicture();
+            } else {
+                // Request camera permission
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+            }
+        }
+    });
+
+    layout.addView(eventNameInput);
+    layout.addView(chooseContactButton);
+    layout.addView(eventDateButton);
+    layout.addView(eventNoteInput);
+    layout.addView(captureImageButton);
+
+    // Set up the buttons
+    builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            boolean isNewEvent = true;
+            //TODO now picture is  required so if there is not it can be problem to save the event
+            // it should be checked separately and then save with url ="" and what to do whith out thread in this case?
+            boolean isRequiredFields = requiredFields();
+            if(isRequiredFields) {
+                //TODO arese the event from fire base and then create new one
+                uploadImageToFirebaseStorage(eventImageBitmap, new UploadCallback() {
+                    @Override
+                    public void onUploadComplete(boolean success) {
+                        if (success) {
+                            Log.d("Avi", "onUploadComplete: saved!!!!!! ");
+                            // Image upload was successful
+                            // Continue with the rest of your code here
+                        }
+                        //TODO success is always false because asynchronous saveEventOnFirestore
+//                        else {
+//                            // Image upload failed
+//                            Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
+//                        }
+                    }
+                });
+            } else { //there are empty required fields
+                Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+    });
+
+    builder.setNegativeButton("Cancel", null);
+    builder.setView(layout);
+
+    // Create and show the dialog
+    AlertDialog dialog = builder.create();
+    dialog.setCanceledOnTouchOutside(false);
+    dialog.show()
+    builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            // Get the updated values from the EditText fields
+            String updatedEventName = eventNameEditText.getText().toString();
+            String updatedEventContact = eventContactEditText.getText().toString();
+            // Get the updated values from other EditText fields as needed
+
+            // Update the event object with the new values
+            event.eventName = updatedEventName;
+            event.contactName = updatedEventContact;
+            // Update other event details as needed
+
+            // Call a method to save the updated event data or update the UI
+            // saveUpdatedEvent(event);
+            // updateEventUI(event);
+        }
+    });
+    builder.setNegativeButton("Cancel", null);
+    builder.show();
+}
 
 
 }
