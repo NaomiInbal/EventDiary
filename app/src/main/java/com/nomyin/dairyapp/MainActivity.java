@@ -25,7 +25,6 @@ import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.text.InputType;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -61,7 +60,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MainActivity extends AppCompatActivity implements EventAdapter.EventClickListener {
+public class MainActivity extends AppCompatActivity implements EventAdapter.EventClickListener ,EventAdapter.EventEditClickListener{
     private static final int REQUEST_PICK_CONTACT = 1;
     private static final int CAMERA_PERMISSION_REQUEST_CODE =6;
     private static final int CAMERA_REQUEST_CODE = 7;
@@ -135,7 +134,7 @@ private int currentMonth;
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
         readEventsOnFireStore();
         eventAdapter.setEventDetailsClickListener(MainActivity.this);
-       // eventAdapter.setEventEditClickListener(MainActivity.this);
+        eventAdapter.setEventEditClickListener(MainActivity.this);
 
     }
     //---------------------------------------------------------------------------------------------
@@ -512,9 +511,6 @@ private boolean saveEventOnFirestore() {
                 MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
                 events.add(myEvent);
                 eventAdapter.notifyDataSetChanged();
-                //TODO copy to allEvents and show the list sorted
-                 allEvents.addAll(events);
-                showEvents();
     Log.d("mylog", "my: " + myEvent);
                 //Store on firebase
                 db.collection("Events").add(myEvent)
@@ -523,6 +519,12 @@ private boolean saveEventOnFirestore() {
                             public void onSuccess(DocumentReference documentReference) {
                                 Log.d("Avi", "DocumentSnapshot added with ID: " + documentReference.getId());
                                 //TODO edd the id to the event to use it to edit the event
+                                myEvent.setEventID( documentReference.getId());
+                                Log.d("edit", "myevent: "+ myEvent);
+                                //TODO copy to allEvents and show the list sorted
+                                allEvents.addAll(events);
+                                showEvents();
+                                Log.d("edit", "onSuccess: "+ events);
                                 isSaveEventOnFirestore.set(true);
                             }
                         })
@@ -692,12 +694,12 @@ private void showEvents() {
             layout.setOrientation(LinearLayout.VERTICAL);
             layout.addView(imageView);
             builder.setView(layout);
-            builder.setPositiveButton("Edit", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    showEditDialog(event);
-                }
-            });
+//            builder.setPositiveButton("Edit", new DialogInterface.OnClickListener() {
+//                @Override
+//                public void onClick(DialogInterface dialog, int which) {
+//                    showEditDialog(event);
+//                }
+//            });
             builder.setView(layout);
             builder.setPositiveButton("OK", null);
             builder.show();
@@ -705,123 +707,151 @@ private void showEvents() {
         //---------------------------------------------------------------------------------
        //edit exists event
         public void onEventEditClick(MyEvent event) {
-            // Handle the edit button click for the specific event
-            // Implement your logic here to open the edit screen or perform any other actions
+            Log.d("edit", "onEventEditClick: ");
+            showEditDialog(event);
         }
 //----------------------------------------------------------------------------------
 private void showEditDialog(MyEvent event) {
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("Add New Event");
-    builder.setMessage("All The Fields Are Required Except Note ");
-    // Set up the input fields
-    LinearLayout layout = new LinearLayout(this);
-    layout.setOrientation(LinearLayout.VERTICAL);
-
-
-    // Set the initial values in the EditText fields
-    //eventNameInput.setText(event.eventName);
-    eventNameInput.setHint(event.eventName);
-    //set the contact
-
-    chooseContactButton.setText(event.contactName);
-    chooseContactButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            permissionContacts();//get permission to use contact
-        }
-    });
-    //set the date
-    eventDateButton.setText(event.eventDate);
-    eventDateButton.setInputType(InputType.TYPE_NULL);
-    eventDateButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            createCalender();//open the calendar
-        }
-    });
-    //set the note
-
-    eventNoteInput.setHint(event.eventNote);
-    //set the picture
-    captureImageButton.setText("Take a picture");
-    captureImageButton.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            // Check camera permission
-            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                takePicture();
-            } else {
-                // Request camera permission
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
-            }
-        }
-    });
-
-    layout.addView(eventNameInput);
-    layout.addView(chooseContactButton);
-    layout.addView(eventDateButton);
-    layout.addView(eventNoteInput);
-    layout.addView(captureImageButton);
-
-    // Set up the buttons
-    builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-            boolean isNewEvent = true;
-            //TODO now picture is  required so if there is not it can be problem to save the event
-            // it should be checked separately and then save with url ="" and what to do whith out thread in this case?
-            boolean isRequiredFields = requiredFields();
-            if(isRequiredFields) {
-                //TODO arese the event from fire base and then create new one
-                uploadImageToFirebaseStorage(eventImageBitmap, new UploadCallback() {
-                    @Override
-                    public void onUploadComplete(boolean success) {
-                        if (success) {
-                            Log.d("Avi", "onUploadComplete: saved!!!!!! ");
-                            // Image upload was successful
-                            // Continue with the rest of your code here
-                        }
-                        //TODO success is always false because asynchronous saveEventOnFirestore
-//                        else {
-//                            // Image upload failed
-//                            Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
+//    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//    builder.setTitle("Edit Event");
+//    builder.setMessage("All The Fields Are Required Except Note ");
+//   //  Set up the input fields
+//    LinearLayout layout = new LinearLayout(this);
+//    layout.setOrientation(LinearLayout.VERTICAL);
+//
+//
+//   //  Set the initial values in the EditText fields
+//    EditText nameInput = new EditText(this);
+//    nameInput.setText("Name: "+event.getEventName());
+//  // set the contact
+//    Button contactButton = new Button(this);
+//
+//   contactButton.setText(event.contactName);
+//   contactButton.setOnClickListener(new View.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
+//            permissionContacts();//get permission to use contact
+//        }
+//    });
+//    //set the date
+//    Button dateButton = new Button(this);
+//
+//    dateButton.setText(event.eventDate);
+//    dateButton.setInputType(InputType.TYPE_NULL);
+//    dateButton.setOnClickListener(new View.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
+//            createCalender();//open the calendar
+//        }
+//    });
+//   //set the note
+//    EditText noteInput = new EditText(this);
+//    noteInput.setHint("Note: "+event.eventNote);
+//    //TODO set the picture
+//    // Create a ImageView to display the image
+//    ImageView imageView = new ImageView(this);
+//    imageView.setLayoutParams(new LinearLayout.LayoutParams(400, 400));
+//    imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+//    imageView.setAdjustViewBounds(true);
+//
+//    // Load the image using Glide or Picasso
+//    Glide.with(this).load(event.eventImageUrl).into(imageView);
+//
+//    // Add the ImageView to the dialog's layout
+//    Button imageButton = new Button(this);
+//
+//    imageButton.setText("Take a picture");
+//    final boolean[] flagPictureTooked = {false};
+//   imageButton.setOnClickListener(new View.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
+//            // Check camera permission
+//            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+//                takePicture();
+//                flagPictureTooked[0] = true;
+//            } else {
+//                // Request camera permission
+//                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+//            }
+//        }
+//    });
+//
+//   layout.addView(nameInput);
+//    layout.addView(contactButton);
+//    layout.addView(dateButton);
+//    layout.addView(noteInput);
+//    if(!flagPictureTooked[0]) {
+//        layout.addView(imageView);
+//        builder.setView(layout);
+//    }
+//    layout.addView(imageButton);
+//
+//    // Set up the buttons
+//    builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+//        @Override
+//        public void onClick(DialogInterface dialog, int which) {
+//            boolean isNewEvent = true;
+//            //TODO now picture is  required so if there is not it can be problem to save the event
+//            // it should be checked separately and then save with url ="" and what to do whith out thread in this case?
+//            String updatedEventName = nameInput.getText().toString();
+//            String updatedEventContact = contactButton.getText().toString();
+//        String updatedEventNote = noteInput.getText().toString();
+//            // Update the event object with the new values
+//            if(!updatedEventName.equals(event.eventName))//name changed
+//            {event.eventName = updatedEventName;}
+//            if(!updatedEventContact.equals(event.contactName))//contact changed
+//            {event.contactName = updatedEventContact;}
+//            if(!updatedEventNote.equals(event.eventNote))//name changed
+//                //TODO arese the event from fire base and then create new one
+//                uploadImageToFirebaseStorage(eventImageBitmap, new UploadCallback() {
+//                    @Override
+//                    public void onUploadComplete(boolean success) {
+//                        if (success) {
+//                            Log.d("Avi", "onUploadComplete: saved!!!!!! ");
+//                            // Image upload was successful
+//                            // Continue with the rest of your code here
 //                        }
-                    }
-                });
-            } else { //there are empty required fields
-                Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
-                return;
-            }
-        }
-    });
-
-    builder.setNegativeButton("Cancel", null);
-    builder.setView(layout);
-
-    // Create and show the dialog
-    AlertDialog dialog = builder.create();
-    dialog.setCanceledOnTouchOutside(false);
-    dialog.show()
-    builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-            // Get the updated values from the EditText fields
-            String updatedEventName = eventNameEditText.getText().toString();
-            String updatedEventContact = eventContactEditText.getText().toString();
-            // Get the updated values from other EditText fields as needed
-
-            // Update the event object with the new values
-            event.eventName = updatedEventName;
-            event.contactName = updatedEventContact;
-            // Update other event details as needed
-
-            // Call a method to save the updated event data or update the UI
-            // saveUpdatedEvent(event);
-            // updateEventUI(event);
-        }
-    });
-    builder.setNegativeButton("Cancel", null);
-    builder.show();
+//                        //TODO success is always false because asynchronous saveEventOnFirestore
+////                        else {
+////                            // Image upload failed
+////                            Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
+////                        }
+//                    }
+//                });
+//          //  } else { //there are empty required fields
+//                Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
+//                return;
+//            }
+//       // }
+//    });
+//
+//    builder.setNegativeButton("Cancel", null);
+//   builder.setView(layout);
+//
+//    // Create and show the dialog
+//    AlertDialog dialog = builder.create();
+//    dialog.setCanceledOnTouchOutside(false);
+//    dialog.show();
+////    builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+////        @Override
+////        public void onClick(DialogInterface dialog, int which) {
+////            // Get the updated values from the EditText fields
+////            String updatedEventName = eventNameEditText.getText().toString();
+////            String updatedEventContact = eventContactEditText.getText().toString();
+////            // Get the updated values from other EditText fields as needed
+////
+////            // Update the event object with the new values
+////            event.eventName = updatedEventName;
+////            event.contactName = updatedEventContact;
+////            // Update other event details as needed
+////
+////            // Call a method to save the updated event data or update the UI
+////            // saveUpdatedEvent(event);
+////            // updateEventUI(event);
+////        }
+////    });
+////    builder.setNegativeButton("Cancel", null);
+////    builder.show();
 }
 
 

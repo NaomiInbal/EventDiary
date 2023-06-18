@@ -10,9 +10,7 @@ public class MyEvent {
     String eventDate;
     String eventNote;
     String eventImageUrl;
-
-
-
+    String eventID;
 
 
     public String getEventName() {
@@ -55,25 +53,44 @@ public class MyEvent {
         return eventImageUrl;
     }
 
+    public String getEventID() {
+        return eventID;
+    }
+
+    public void setEventID(String eventID) {
+        this.eventID = eventID;
+    }
+
+    //constructor without eventID parameter
     public MyEvent(String eventName, String contactName, String eventDate, String eventNote, String eventImageUrl) {
         this.eventName = eventName;
-        this.eventDate =eventDate;
+        this.eventDate = eventDate;
         this.contactName = contactName;
         this.eventImageUrl = eventImageUrl;
         this.eventNote = eventNote;
-        Log.d("mylog", "MyEvent: "+ eventName+ " "+ eventNote+" " + eventDate +" "+ contactName);
     }
 
-        @Override
-        public String toString() {
-            return "MyEvent{" +
-                    "eventName='" + eventName + '\'' +
-                    ", eventContactName='" + contactName + '\'' +
-                    ", eventDateStr='" + eventDate + '\'' +
-                    ", eventNote='" + eventNote + '\'' +
-                    ", eventImageUrl='" + eventImageUrl + '\'' +
-                    '}';
-        }
+    // Constructor with eventID parameter
+    public MyEvent(String eventID, String eventName, String contactName, String eventDate, String eventNote, String eventImageUrl) {
+        this.eventID = eventID;
+        this.eventName = eventName;
+        this.contactName = contactName;
+        this.eventDate = eventDate;
+        this.eventNote = eventNote;
+        this.eventImageUrl = eventImageUrl;
     }
+
+    @Override
+    public String toString() {
+        return "MyEvent{" +
+                "eventName='" + eventName + '\'' +
+                ", contactName='" + contactName + '\'' +
+                ", eventDate='" + eventDate + '\'' +
+                ", eventNote='" + eventNote + '\'' +
+                ", eventImageUrl='" + eventImageUrl + '\'' +
+                ", eventID='" + eventID + '\'' +
+                '}';
+    }
+}
 
 
