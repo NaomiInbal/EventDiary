@@ -69,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView monthTitle;
 
     private ArrayList<MyEvent> events;
+    private ArrayList<MyEvent> allEvents;
     private EventAdapter eventAdapter;
     private ArrayAdapter<String> adapter;
     private ListView listView;
@@ -86,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     private Bitmap eventImageBitmap;
     //private String eventImageUrl;
     private String eventImageUrl;
-
+private int currentMonth;
     private String eventName;
 
     private String eventContactName;
@@ -125,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void initialize(){
         events = new ArrayList();
+        allEvents = new ArrayList();
         listData = new ArrayList<>();
         eventAdapter.events = events;
         eventAdapter.notifyDataSetChanged();
@@ -505,6 +507,7 @@ private boolean saveEventOnFirestore() {
                 MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
                 events.add(myEvent);
                 eventAdapter.notifyDataSetChanged();
+                //TODO copy to allEvents and show the list sorted
                 Log.d("mylog", "my: " + myEvent);
                 //Store on firebase
                 db.collection("Events").add(myEvent)
@@ -556,7 +559,10 @@ private void readEventsOnFireStore() {
                             }
                             // Notify the adapter that the data has changed
                             eventAdapter.notifyDataSetChanged();
+                            allEvents.addAll(events);//copy the events
                             filterEventsByMonth();
+
+
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -577,17 +583,16 @@ private void readEventsOnFireStore() {
     //----------------------------------------------------------------------------------------------------------
 private void showEvents() {
     Log.d("TAG", "showEvents: ");
-    filterEventsByMonth();
-    // Initialize the calendar instance
     calendar = Calendar.getInstance();
-    // Set the name of the current month
-    updateMonthTitle();
+    currentMonth = calendar.get(Calendar.MONTH);
+    updateMonth();
+    filterEventsByMonth();
     btnPrevMonth.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             // Move to the previous month
             calendar.add(Calendar.MONTH, -1);
-            updateMonthTitle();
+            updateMonth();
             filterEventsByMonth();
         }
     });
@@ -597,7 +602,7 @@ private void showEvents() {
         public void onClick(View v) {
             // Move to the next month
             calendar.add(Calendar.MONTH, 1);
-            updateMonthTitle();
+            updateMonth();
             Log.d("TAG", "onClick: ");
             filterEventsByMonth();
         }
@@ -606,31 +611,31 @@ private void showEvents() {
 //---------------------------------------------------------------------------------------------
     //Sort events by month
     private void filterEventsByMonth() {
-        Log.d("Avi", "filterEventsByMonth: ");
         // Create a Calendar instance
         Calendar calendar = Calendar.getInstance();
-
         // Get the current month and year
-        int currentMonth = calendar.get(Calendar.MONTH);
-        int currentYear = calendar.get(Calendar.YEAR);
-        Log.d("Avi", "filterEventsByMonth: "+ currentMonth);
+      //  int curretMonth = calendar.get(Calendar.MONTH); gives the real date
+        Log.d("currentMonth", "filterEventsByMonth: "+ allEvents);
+        Log.d("currentMonth", "filterEventsByMonth: "+ currentMonth);
         ArrayList<MyEvent> currentMonthEvents = new ArrayList<>();
         Date eventDate;
         // Filter events by the current month and year
-        for (MyEvent event : events) {
-//            Calendar eventCalendar = Calendar.getInstance();
-            Log.d("Avi", "filterEventsByMonth: "+ event);
+        for (MyEvent event : allEvents) {
+            Log.d("currentMonth", "filterEventsByMonth: "+ event);
             //convert string date to object Date
             eventDate = convertToDate(event);
             if(eventDate==null){//Handle error
                 continue;
             }
             calendar.setTime(eventDate);
-            int eventMonth = calendar.get(Calendar.MONTH);
+            int eventMonth = calendar.get(Calendar.MONTH)+1;
+            Log.d("currentMonth", "eventMonth "+ eventMonth);
             if (eventMonth == currentMonth) {
                 currentMonthEvents.add(event);
             }
         }
+        Log.d("currentMonth", "currentMonthEvents "+ currentMonthEvents);
+
         // Display the current month events in the ListView
         events.clear();
         events.addAll(currentMonthEvents);
@@ -656,10 +661,12 @@ private void showEvents() {
 
 //-----------------------------------------------------------------------------------------------------------
     //display the name of the month
-    private void updateMonthTitle() {
+    private void updateMonth() {
         // Get the name of the current month
         String monthName = new SimpleDateFormat("MMMM", Locale.getDefault()).format(calendar.getTime());
-        Log.d("logii", "updateMonthTitle: "+ monthName);
+        currentMonth = calendar.get(Calendar.MONTH)+1;
+
+        Log.d("currentMonth", "updateMonthTitle: "+ monthName + currentMonth);
         // Set the month name in the MonthTitle TextView
         monthTitle.setText(monthName);
     }
