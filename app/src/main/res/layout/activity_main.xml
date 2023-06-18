@@ -12,11 +12,12 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/btnNextMonthID"
+            android:id="@+id/btnPrevMonthID"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Next" />
+            android:text="Previous "
+            />
 
         <TextView
             android:id="@+id/MonthTitleID"
@@ -28,11 +29,12 @@
             android:paddingBottom="16dp" />
 
         <Button
-            android:id="@+id/btnPrevMonthID"
+            android:id="@+id/btnNextMonthID"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Previous " />
+            android:text="Next"
+ />
 
     </LinearLayout>
 
