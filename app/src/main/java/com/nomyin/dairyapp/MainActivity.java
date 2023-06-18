@@ -508,7 +508,9 @@ private boolean saveEventOnFirestore() {
                 events.add(myEvent);
                 eventAdapter.notifyDataSetChanged();
                 //TODO copy to allEvents and show the list sorted
-                Log.d("mylog", "my: " + myEvent);
+                 allEvents.addAll(events);
+                showEvents();
+    Log.d("mylog", "my: " + myEvent);
                 //Store on firebase
                 db.collection("Events").add(myEvent)
                         .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
