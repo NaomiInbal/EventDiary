@@ -85,8 +85,8 @@ public class MainActivity extends AppCompatActivity implements EventAdapter.Even
     private static final int REQUEST_IMAGE_PICKER = 2;
     private EditText eventNoteInput;
     private ImageView eventImageView;
+    private Boolean flagPicture;
     private Bitmap eventImageBitmap;
-    //private String eventImageUrl;
     private String eventImageUrl;
 private int currentMonth;
     private String eventName;
@@ -102,7 +102,6 @@ private int currentMonth;
     private int nID = 0;
     private static final int REQUEST_CAMERA_PHOTO = 3;
     private static final int REQUEST_READ_CONTACTS_PERMISSION = 4;
-    private ActivityResultLauncher<Intent> contactPickerLauncher;
     // Calendar instance to get the current month
     private Calendar calendar;
 
@@ -117,8 +116,6 @@ private int currentMonth;
         //readEventsOnFirestore();
         showEvents();
         addNewEvent();
-//        setupNotification();
-//        showNotification();
     }
     private void setupUI() {
         listView = findViewById(R.id.listView);
@@ -217,7 +214,7 @@ private int currentMonth;
     private void showAddEventDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add New Event");
-        builder.setMessage("All The Fields Are Required Except Note ");
+        builder.setMessage("The Fields Date & Name & Contact Are Required");
         //TODO if edit needed - alloud not to take picture and note
 
         // Set up the input fields
@@ -260,12 +257,15 @@ private int currentMonth;
         //set the picture
         captureImageButton = new Button(this);
         captureImageButton.setText("Take a picture");
+        flagPicture =false;
         captureImageButton.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 // Check camera permission
                 if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                     takePicture();
+                    flagPicture = true;
                 } else {
                     // Request camera permission
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
@@ -287,7 +287,7 @@ private int currentMonth;
                 //TODO now picture is  required so if there is not it can be problem to save the event
                 // it should be checked separately and then save with url ="" and what to do whith out thread in this case?
                 boolean isRequiredFields = requiredFields();
-          if(isRequiredFields) {
+          if(isRequiredFields) {// Required field are ok
                 uploadImageToFirebaseStorage(eventImageBitmap, new UploadCallback() {
                     @Override
                     public void onUploadComplete(boolean success) {
@@ -297,14 +297,14 @@ private int currentMonth;
                             // Continue with the rest of your code here
                         }
                         //TODO success is always false because asynchronous saveEventOnFirestore
-//                        else {
+                        else {
 //                            // Image upload failed
-//                            Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
-//                        }
+                            Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
+                       }
                     }
                 });
             } else { //there are empty required fields
-                Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
+              Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
                 return;
             }
             }
@@ -423,12 +423,13 @@ private int currentMonth;
         boolean isImage = eventImageBitmap != null ;
         Log.e("Avi", "requiredFields: "+ isImage);
         //checks required fields
-        if (!eventName.isEmpty() && !selectedDate.isEmpty()  && isImage &&  !eventContactName.isEmpty()) {
+        if (!eventName.isEmpty() && !selectedDate.isEmpty() &&  !eventContactName.isEmpty()) {
             return true;//If all the required lines are not empty or null
         }
         else return false;
     }
-
+    //------------------------------------------------------------------------------------------
+//calculate the date before the choosen date
     public static String getPreviousDay(String currentDate) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
         try {
@@ -442,6 +443,7 @@ private int currentMonth;
         }
         return null;
     }
+//calculate the week before the choosen date
 
     public static String getPreviousWeek(String currentDate) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
@@ -467,6 +469,10 @@ private int currentMonth;
     }
 
 private void uploadImageToFirebaseStorage(Bitmap eventImageBitmap, UploadCallback callback) {
+        if(!flagPicture){
+             saveEventOnFirestore();
+            return;
+        }
     Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
@@ -544,9 +550,14 @@ private boolean saveEventOnFirestore() {
                         ", eventDateStr='" + eventDateStr + '\n' + "eventDateDayBefore" + eventDateDayBefore + '\'' +
                          "eventDateWeekBefore"+ eventDateWeekBefore + "eventNote=" + eventNote + '\'' +
                         ", eventImageUrl='" + eventImageUrl + '\'');
-                MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr,eventDateDayBefore, eventDateWeekBefore , eventNote, eventImageUrl);
-                Log.d("mylog", "my: " + myEvent);
-                //Store on firebase
+    MyEvent myEvent;
+    if (flagPicture) {//picture was taken{
+         myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventDateDayBefore, eventDateWeekBefore, eventNote, eventImageUrl);
+        Log.d("mylog", "my: " + myEvent);
+    }else {
+        myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventDateDayBefore, eventDateWeekBefore, eventNote);
+    }
+        //Store on firebase
                 db.collection("Events").add(myEvent)
                         .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                             @Override
@@ -687,7 +698,7 @@ private void showEvents() {
     private Date convertToDate(MyEvent event) {
         Date date=null;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        if(event.eventDate ==null) {
+        if(event.eventDate == null) {
             return date;
         }
         try {

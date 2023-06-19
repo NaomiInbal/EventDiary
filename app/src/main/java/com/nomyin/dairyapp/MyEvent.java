@@ -74,6 +74,16 @@ public class MyEvent {
         this.eventNote = eventNote;
     }
 
+    // Constructor without eventID and eventImageUrl parameters
+    public MyEvent(String eventName, String contactName, String eventDate, String eventDateDayBefore, String eventDateWeekBefore, String eventNote) {
+        this.eventName = eventName;
+        this.eventDate = eventDate;
+        this.eventDateDayBefore = eventDateDayBefore;
+        this.eventDateWeekBefore = eventDateWeekBefore;
+        this.contactName = contactName;
+        this.eventNote = eventNote;
+    }
+
     // Constructor with eventID parameter
     public MyEvent(String eventID, String eventName, String contactName, String eventDate,String eventDateDayBefore, String eventDateWeekBefore, String eventNote, String eventImageUrl) {
         this.eventID = eventID;
