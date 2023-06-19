@@ -1,6 +1,5 @@
 package com.nomyin.dairyapp;
 
-import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,9 +9,8 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 
 //import android.content.DialogInterface;
+import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
-import android.app.NotificationManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 //import android.os.Build;
 import android.content.pm.PackageManager;
@@ -27,10 +25,7 @@ import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -40,13 +35,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -64,7 +56,6 @@ public class MainActivity extends AppCompatActivity implements EventAdapter.Even
     private static final int REQUEST_PICK_CONTACT = 1;
     private static final int CAMERA_PERMISSION_REQUEST_CODE =6;
     private static final int CAMERA_REQUEST_CODE = 7;
-    private Button btn_addEvent;
     private Button  btnPrevMonth;
     private Button btnNextMonth;
     private TextView monthTitle;
@@ -72,19 +63,11 @@ public class MainActivity extends AppCompatActivity implements EventAdapter.Even
     private ArrayList<MyEvent> events;
     private ArrayList<MyEvent> allEvents;
     private EventAdapter eventAdapter;
-    private ArrayAdapter<String> adapter;
-    private ListView listView;
-    private ArrayList<String> listData;
-    private static final int REQUEST_CONTACT_PICKER =5;
     private EditText eventNameInput;
-    private DatePicker eventDatePicker;
     private Button chooseContactButton;
     private Button eventDateButton;
     private  Button captureImageButton;
-    private String selectedContactName;
-    private static final int REQUEST_IMAGE_PICKER = 2;
     private EditText eventNoteInput;
-    private ImageView eventImageView;
     private Boolean flagPicture;
     private Bitmap eventImageBitmap;
     private String eventImageUrl;
@@ -98,9 +81,6 @@ private int currentMonth;
 
     private String eventNote;
     private String selectedDate;
-    private NotificationManager notificationManager;
-    private int nID = 0;
-    private static final int REQUEST_CAMERA_PHOTO = 3;
     private static final int REQUEST_READ_CONTACTS_PERMISSION = 4;
     // Calendar instance to get the current month
     private Calendar calendar;
@@ -118,7 +98,7 @@ private int currentMonth;
         addNewEvent();
     }
     private void setupUI() {
-        listView = findViewById(R.id.listView);
+        ListView listView = findViewById(R.id.listView);
         eventAdapter = new EventAdapter(this);
         listView.setAdapter(eventAdapter);
         btnPrevMonth = findViewById(R.id.btnPrevMonthID);
@@ -126,12 +106,10 @@ private int currentMonth;
         monthTitle = findViewById(R.id.MonthTitleID);
     }
     private void initialize(){
-        events = new ArrayList();
-        allEvents = new ArrayList();
-        listData = new ArrayList<>();
+        events = new ArrayList<>();
+        allEvents = new ArrayList<>();
         eventAdapter.events = events;
         eventAdapter.notifyDataSetChanged();
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listData);
         readEventsOnFireStore();
         eventAdapter.setEventDetailsClickListener(MainActivity.this);
         eventAdapter.setEventEditClickListener(MainActivity.this);
@@ -203,14 +181,10 @@ private int currentMonth;
     //----------------------------------------------------------------------------------------
     //add new event
     private void addNewEvent() {
-        btn_addEvent = findViewById(R.id.btnAddEventID);
-        btn_addEvent.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showAddEventDialog();
-            }
-        });
+        Button btn_addEvent = findViewById(R.id.btnAddEventID);
+        btn_addEvent.setOnClickListener(view -> showAddEventDialog());
     }
+    @SuppressLint("SetTextI18n")
     private void showAddEventDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Add New Event");
@@ -235,21 +209,15 @@ private int currentMonth;
         //set the contact
         chooseContactButton = new Button(this);
         chooseContactButton.setText("Choose a contact");
-        chooseContactButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                permissionContacts();//get permission to use contact
-            }
+        chooseContactButton.setOnClickListener(v -> {
+            permissionContacts();//get permission to use contact
         });
         //set the date
         eventDateButton = new Button(this);
         eventDateButton.setText("Choose a date");
         eventDateButton.setInputType(InputType.TYPE_NULL);
-        eventDateButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                createCalender();//open the calendar
-            }
+        eventDateButton.setOnClickListener(v -> {
+            createCalender();//open the calendar
         });
         //set the note
         eventNoteInput = new EditText(this);
@@ -258,18 +226,14 @@ private int currentMonth;
         captureImageButton = new Button(this);
         captureImageButton.setText("Take a picture");
         flagPicture =false;
-        captureImageButton.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                // Check camera permission
-                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                    takePicture();
-                    flagPicture = true;
-                } else {
-                    // Request camera permission
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
-                }
+        captureImageButton.setOnClickListener(v -> {
+            // Check camera permission
+            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                takePicture();
+                flagPicture = true;
+            } else {
+                // Request camera permission
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
             }
         });
 
@@ -280,34 +244,26 @@ private int currentMonth;
         layout.addView(captureImageButton);
 
         // Set up the buttons
-        builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                boolean isNewEvent = true;
-                //TODO now picture is  required so if there is not it can be problem to save the event
-                // it should be checked separately and then save with url ="" and what to do whith out thread in this case?
-                boolean isRequiredFields = requiredFields();
-          if(isRequiredFields) {// Required field are ok
-                uploadImageToFirebaseStorage(eventImageBitmap, new UploadCallback() {
-                    @Override
-                    public void onUploadComplete(boolean success) {
-                        if (success) {
-                            Log.d("Avi", "onUploadComplete: saved!!!!!! ");
-                            // Image upload was successful
-                            // Continue with the rest of your code here
-                        }
-                        //TODO success is always false because asynchronous saveEventOnFirestore
-                        else {
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            //TODO now picture is  required so if there is not it can be problem to save the event
+            // it should be checked separately and then save with url ="" and what to do whith out thread in this case?
+            boolean isRequiredFields = requiredFields();
+      if(isRequiredFields) {// Required field are ok
+            uploadImageToFirebaseStorage(eventImageBitmap, success -> {
+                if (success) {
+                    Log.d("Avi", "onUploadComplete: saved!!!!!! ");
+                    // Image upload was successful
+                    // Continue with the rest of your code here
+                }
+                //TODO success is always false because asynchronous saveEventOnFirestore
+                else {
 //                            // Image upload failed
-                            Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
-                       }
-                    }
-                });
-            } else { //there are empty required fields
-              Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            }
+                    Toast.makeText(MainActivity.this, "The event did not save! Maybe you are not connect to wifi, please try again", Toast.LENGTH_SHORT).show();
+               }
+            });
+        } else { //there are empty required fields
+          Toast.makeText(MainActivity.this, "The event did not save because the required fields, please try again", Toast.LENGTH_SHORT).show();
+      }
         });
 
         builder.setNegativeButton("Cancel", null);
@@ -380,6 +336,7 @@ private int currentMonth;
     }
     //--------------------------------------------------------------------------------------------
     //The result of the choose contact and open camera
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -423,10 +380,7 @@ private int currentMonth;
         boolean isImage = eventImageBitmap != null ;
         Log.e("Avi", "requiredFields: "+ isImage);
         //checks required fields
-        if (!eventName.isEmpty() && !selectedDate.isEmpty() &&  !eventContactName.isEmpty()) {
-            return true;//If all the required lines are not empty or null
-        }
-        else return false;
+        return !eventName.isEmpty() && !selectedDate.isEmpty() && !eventContactName.isEmpty();//If all the required lines are not empty or null
     }
     //------------------------------------------------------------------------------------------
 //calculate the date before the choosen date
@@ -495,29 +449,19 @@ private void uploadImageToFirebaseStorage(Bitmap eventImageBitmap, UploadCallbac
                         if (task.isSuccessful()) {
                             // Image upload successful
                             // Retrieve the download URL for the image
-                            storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri downloadUri) {
-                                    // The download URL is available here
-                                    eventImageUrl = downloadUri.toString();
-                                    // Save the event
-                                    boolean saveSuccess = saveEventOnFirestore();
-                                    Log.d("Avi", "onSuccess: saveSuccess:"+ saveSuccess +"eventImageUrl "+ eventImageUrl);
+                            storageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                                // The download URL is available here
+                                eventImageUrl = downloadUri.toString();
+                                // Save the event
+                                boolean saveSuccess = saveEventOnFirestore();
+                                Log.d("Avi", "onSuccess: saveSuccess:"+ saveSuccess +"eventImageUrl "+ eventImageUrl);
 
-                                    if (saveSuccess) {
-                                        callback.onUploadComplete(true);
-                                    } else {
-                                        callback.onUploadComplete(false);
-                                    }
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    // Error occurred while getting the download URL
-                                    // Handle the error as needed
-                                    Log.d("Avi", "failedUploadImage: " + eventImageUrl);
-                                    callback.onUploadComplete(false);
-                                }
+                                callback.onUploadComplete(saveSuccess);
+                            }).addOnFailureListener(e -> {
+                                // Error occurred while getting the download URL
+                                // Handle the error as needed
+                                Log.d("Avi", "failedUploadImage: " + eventImageUrl);
+                                callback.onUploadComplete(false);
                             });
                         } else {
                             // Image upload failed
@@ -559,78 +503,60 @@ private boolean saveEventOnFirestore() {
     }
         //Store on firebase
                 db.collection("Events").add(myEvent)
-                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                            @Override
-                            public void onSuccess(DocumentReference documentReference) {
-                                Log.d("Avi", "DocumentSnapshot added with ID: " + documentReference.getId());
-                                //TODO edd the id to the event to use it to edit the event
-                                myEvent.setEventID( documentReference.getId());
-                                Log.d("edit", "myevent: "+ myEvent);
-                                //TODO copy to allEvents and show the list sorted
-                                events.add(myEvent);
-                                eventAdapter.notifyDataSetChanged();
-                                allEvents.add(myEvent);
-                                //filterEventsByMonth();
-                                showEvents();
-                                isSaveEventOnFirestore.set(true);
-                            }
+                        .addOnSuccessListener(documentReference -> {
+                            Log.d("Avi", "DocumentSnapshot added with ID: " + documentReference.getId());
+                            //TODO edd the id to the event to use it to edit the event
+                            myEvent.setEventID( documentReference.getId());
+                            Log.d("edit", "myevent: "+ myEvent);
+                            //TODO copy to allEvents and show the list sorted
+                            events.add(myEvent);
+                            eventAdapter.notifyDataSetChanged();
+                            allEvents.add(myEvent);
+                            //filterEventsByMonth();
+                            showEvents();
+                            isSaveEventOnFirestore.set(true);
                         })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.w("Avi", "Error adding document", e);
-
-                            }
-                        });
+                        .addOnFailureListener(e -> Log.w("Avi", "Error adding document", e));
     return isSaveEventOnFirestore.get();
 }
 //---------------------------------------------------------------------------------------------------------------------
 // read events from FB
 private void readEventsOnFireStore() {
-    Thread thread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            FirebaseFirestore db = FirebaseFirestore.getInstance();//TODO to declare in mainactivity? use in 2 difference function
+    Thread thread = new Thread(() -> {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();//TODO to declare in mainactivity? use in 2 difference function
 
-            // Query the "Events" collection in Firestore
-            db.collection("Events")
-                    .get()
-                    .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-                        @Override
-                        public void onSuccess(QuerySnapshot querySnapshot) {
-                            // Clear the existing events list
-                            events.clear();
+        // Query the "Events" collection in Firestore
+        db.collection("Events")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    // Clear the existing events list
+                    events.clear();
 
-                            // Iterate through the documents in the query snapshot
-                            for (QueryDocumentSnapshot document : querySnapshot) {
-                                // Extract the event details from the document
-                                 eventName = document.getString("eventName");
-                                eventContactName = document.getString("contactName");
-                                eventDateStr = document.getString("eventDate");
-                                eventDateDayBefore =document.getString("eventDateDayBefore");
-                                eventDateWeekBefore = document.getString("eventDateWeekBefore");
-                                eventNote = document.getString("eventNote");
-                                 eventImageUrl = document.getString("eventImageUrl");
+                    // Iterate through the documents in the query snapshot
+                    for (QueryDocumentSnapshot document : querySnapshot) {
+                        // Extract the event details from the document
+                         eventName = document.getString("eventName");
+                        eventContactName = document.getString("contactName");
+                        eventDateStr = document.getString("eventDate");
+                        eventDateDayBefore =document.getString("eventDateDayBefore");
+                        eventDateWeekBefore = document.getString("eventDateWeekBefore");
+                        eventNote = document.getString("eventNote");
+                         eventImageUrl = document.getString("eventImageUrl");
 
-                                // Create a new MyEvent object and add it to the events list
-                                MyEvent event = new MyEvent(eventName, eventContactName, eventDateStr, eventDateDayBefore, eventDateWeekBefore, eventNote, eventImageUrl);
-                                events.add(event);
-                            }
-                            // Notify the adapter that the data has changed
-                            eventAdapter.notifyDataSetChanged();
-                            allEvents.addAll(events);//copy the events
+                        // Create a new MyEvent object and add it to the events list
+                        MyEvent event = new MyEvent(eventName, eventContactName, eventDateStr, eventDateDayBefore, eventDateWeekBefore, eventNote, eventImageUrl);
+                        events.add(event);
+                    }
+                    // Notify the adapter that the data has changed
+                    eventAdapter.notifyDataSetChanged();
+                    allEvents.addAll(events);//copy the events
 
-                            filterEventsByMonth();
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            // Handle any errors that occur during the Firestore read operation
-                            Log.e("FirebaseFirestore", "Error reading events from Firestore", e);
-                        }
-                    });
-        }
+                    filterEventsByMonth();
+                })
+                .addOnFailureListener(e -> {
+                    // Handle any errors that occur during the Firestore read operation
+                    Log.e("FirebaseFirestore", "Error reading events from Firestore", e);
+                });
     });
 
     thread.start();
@@ -645,25 +571,19 @@ private void showEvents() {
     currentMonth = calendar.get(Calendar.MONTH);
     updateMonth();
     filterEventsByMonth();
-    btnPrevMonth.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            // Move to the previous month
-            calendar.add(Calendar.MONTH, -1);
-            updateMonth();
-            filterEventsByMonth();
-        }
+    btnPrevMonth.setOnClickListener(v -> {
+        // Move to the previous month
+        calendar.add(Calendar.MONTH, -1);
+        updateMonth();
+        filterEventsByMonth();
     });
 
-    btnNextMonth.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            // Move to the next month
-            calendar.add(Calendar.MONTH, 1);
-            updateMonth();
-            Log.d("TAG", "onClick: ");
-            filterEventsByMonth();
-        }
+    btnNextMonth.setOnClickListener(v -> {
+        // Move to the next month
+        calendar.add(Calendar.MONTH, 1);
+        updateMonth();
+        Log.d("TAG", "onClick: ");
+        filterEventsByMonth();
     });
 }
 //---------------------------------------------------------------------------------------------
@@ -755,10 +675,10 @@ private void showEvents() {
        //edit exists event
         public void onEventEditClick(MyEvent event) {
             Log.d("edit", "onEventEditClick: ");
-            showEditDialog(event);
+            //showEditDialog(event);
         }
 //----------------------------------------------------------------------------------
-private void showEditDialog(MyEvent event) {
+//private void showEditDialog(MyEvent event) {
 //    AlertDialog.Builder builder = new AlertDialog.Builder(this);
 //    builder.setTitle("Edit Event");
 //    builder.setMessage("All The Fields Are Required Except Note ");
@@ -899,7 +819,7 @@ private void showEditDialog(MyEvent event) {
 ////    });
 ////    builder.setNegativeButton("Cancel", null);
 ////    builder.show();
-}
+//}
 
 
 }
