@@ -559,7 +559,8 @@ private boolean saveEventOnFirestore() {
                                 events.add(myEvent);
                                 eventAdapter.notifyDataSetChanged();
                                 allEvents.add(myEvent);
-                                filterEventsByMonth();
+                                //filterEventsByMonth();
+                                showEvents();
                                 isSaveEventOnFirestore.set(true);
                             }
                         })
