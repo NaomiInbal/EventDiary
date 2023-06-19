@@ -509,8 +509,7 @@ private boolean saveEventOnFirestore() {
                         ", eventNote='" + eventNote + '\'' +
                         ", eventImageUrl='" + eventImageUrl + '\'');
                 MyEvent myEvent = new MyEvent(eventName, eventContactName, eventDateStr, eventNote, eventImageUrl);
-                events.add(myEvent);
-                eventAdapter.notifyDataSetChanged();
+
     Log.d("mylog", "my: " + myEvent);
                 //Store on firebase
                 db.collection("Events").add(myEvent)
@@ -522,9 +521,10 @@ private boolean saveEventOnFirestore() {
                                 myEvent.setEventID( documentReference.getId());
                                 Log.d("edit", "myevent: "+ myEvent);
                                 //TODO copy to allEvents and show the list sorted
-                                allEvents.addAll(events);
-                                showEvents();
-                                Log.d("edit", "onSuccess: "+ events);
+                                events.add(myEvent);
+                                eventAdapter.notifyDataSetChanged();
+                                allEvents.add(myEvent);
+                                filterEventsByMonth();
                                 isSaveEventOnFirestore.set(true);
                             }
                         })
@@ -570,6 +570,7 @@ private void readEventsOnFireStore() {
                             // Notify the adapter that the data has changed
                             eventAdapter.notifyDataSetChanged();
                             allEvents.addAll(events);//copy the events
+
                             filterEventsByMonth();
 
 
@@ -640,10 +641,11 @@ private void showEvents() {
                 currentMonthEvents.add(event);
             }
         }
-
         // Display the current month events in the ListView
         events.clear();
         events.addAll(currentMonthEvents);
+        Log.d("edit", "filterEventsByMonth: current"+events);
+        Log.d("edit", "filterEventsByMonth: events"+events);
         eventAdapter.notifyDataSetChanged();
     }
 //---------------------------------------------------------------------------------------------------------
