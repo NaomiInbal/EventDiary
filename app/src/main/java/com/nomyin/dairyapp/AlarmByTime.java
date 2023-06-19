@@ -49,14 +49,14 @@ import java.util.Date;
 import java.util.Locale;
 
 public class AlarmByTime {
-    public static void setAlarm(String time, Context context) {
+    public static void setAlarm(MyEvent event, Context context) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, ReceiverDateChanged.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ENGLISH);
         try {
-            Date alarmTime = sdf.parse(time);
+            Date alarmTime = sdf.parse(event.eventDate);
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(alarmTime);
 

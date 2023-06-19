@@ -56,7 +56,7 @@ private int selectedInx = 0;
                 SharedPreferences.Editor editor = sp.edit();
                 editor.putString("set2", time1);
                 editor.apply();
-                AlarmByTime.setAlarm(time1, SettingActivity.this);
+              //  AlarmByTime.setAlarm(time1, SettingActivity.this);
 
             }, hour, minute, true);
             mTimePicker.setTitle("Select Time");

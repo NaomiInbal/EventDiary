@@ -13,6 +13,7 @@ import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 //import android.os.Build;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -84,6 +85,8 @@ private int currentMonth;
     private static final int REQUEST_READ_CONTACTS_PERMISSION = 4;
     // Calendar instance to get the current month
     private Calendar calendar;
+    private ReceiverDateChanged myReceiver;
+
 
 
     @Override
@@ -113,7 +116,10 @@ private int currentMonth;
         readEventsOnFireStore();
         eventAdapter.setEventDetailsClickListener(MainActivity.this);
         eventAdapter.setEventEditClickListener(MainActivity.this);
-
+// Initialize and register the broadcast receiver
+        myReceiver = new ReceiverDateChanged();
+        IntentFilter intentFilter = new IntentFilter("com.example.ACTION_DATE_CHANGED");
+        registerReceiver(myReceiver, intentFilter);
     }
     //---------------------------------------------------------------------------------------------
     //create the menu
@@ -515,6 +521,8 @@ private boolean saveEventOnFirestore() {
                             //filterEventsByMonth();
                             showEvents();
                             isSaveEventOnFirestore.set(true);
+                          //  AlarmByTime.setAlarm(myEvent, MainActivity.this);
+
                         })
                         .addOnFailureListener(e -> Log.w("Avi", "Error adding document", e));
     return isSaveEventOnFirestore.get();
@@ -820,7 +828,12 @@ private void showEvents() {
 ////    builder.setNegativeButton("Cancel", null);
 ////    builder.show();
 //}
-
+//--------------------------------------------------------------------------------------------------
+@Override
+protected void onPause() {
+    super.onPause();
+    unregisterReceiver(myReceiver);
+}
 
 }
 
