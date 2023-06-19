@@ -1,8 +1,7 @@
 package com.nomyin.dairyapp;
 
-import android.util.Log;
 
-import com.google.firebase.storage.StorageReference;
+import androidx.annotation.NonNull;
 
 public class MyEvent {
     String eventName;
@@ -84,18 +83,8 @@ public class MyEvent {
         this.eventNote = eventNote;
     }
 
-    // Constructor with eventID parameter
-    public MyEvent(String eventID, String eventName, String contactName, String eventDate,String eventDateDayBefore, String eventDateWeekBefore, String eventNote, String eventImageUrl) {
-        this.eventID = eventID;
-        this.eventName = eventName;
-        this.contactName = contactName;
-        this.eventDate = eventDate;
-        this.eventDateDayBefore = eventDateDayBefore;
-        this.eventDateWeekBefore = eventDateWeekBefore;
-        this.eventNote = eventNote;
-        this.eventImageUrl = eventImageUrl;
-    }
 
+    @NonNull
     @Override
     public String toString() {
         return "MyEvent{" +

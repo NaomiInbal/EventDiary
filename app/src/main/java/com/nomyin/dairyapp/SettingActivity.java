@@ -2,26 +2,15 @@ package com.nomyin.dairyapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.app.TimePickerDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.TimePicker;
-import android.widget.Toast;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Locale;
 
 
 public class SettingActivity extends AppCompatActivity {
@@ -46,41 +35,32 @@ private int selectedInx = 0;
             radioButton.setChecked(true);
         }
 
-        radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup radioGroup, int i) {
-                RadioButton r = findViewById(i);
-                selectedInx = radioGroup.indexOfChild(r);
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putInt("set1", selectedInx);
-                editor.apply();
+        radioGroup.setOnCheckedChangeListener((radioGroup1, i) -> {
+            RadioButton r = findViewById(i);
+            selectedInx = radioGroup1.indexOfChild(r);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putInt("set1", selectedInx);
+            editor.apply();
 
-            }
         });
         //setting 2 - time picker
-        findViewById(R.id.btnTimepickerID).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Calendar currentTime = Calendar.getInstance();
-                int hour = currentTime.get(Calendar.HOUR_OF_DAY);
-                int minute = currentTime.get(Calendar.MINUTE);
-                TimePickerDialog mTimePicker;
-                mTimePicker = new TimePickerDialog(SettingActivity.this, new TimePickerDialog.OnTimeSetListener() {
-                    @Override
-                    //save the time in SP
-                    public void onTimeSet(TimePicker timePicker, int selectedHour, int selectedMinute) {
-                        String time = "" + selectedHour + ":" + selectedMinute;
-                        timePickerTxt.setText(time);
-                        SharedPreferences.Editor editor = sp.edit();
-                        editor.putString("set2", time);
-                        editor.apply();
-                        AlarmByTime.setAlarm(time, SettingActivity.this);
+        findViewById(R.id.btnTimepickerID).setOnClickListener(view -> {
+            Calendar currentTime = Calendar.getInstance();
+            int hour = currentTime.get(Calendar.HOUR_OF_DAY);
+            int minute = currentTime.get(Calendar.MINUTE);
+            TimePickerDialog mTimePicker;
+            //save the time in SP
+            mTimePicker = new TimePickerDialog(SettingActivity.this, (timePicker, selectedHour, selectedMinute) -> {
+                String time1 = "" + selectedHour + ":" + selectedMinute;
+                timePickerTxt.setText(time1);
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putString("set2", time1);
+                editor.apply();
+                AlarmByTime.setAlarm(time1, SettingActivity.this);
 
-                    }
-                }, hour, minute, true);
-                mTimePicker.setTitle("Select Time");
-                mTimePicker.show();
-            }
+            }, hour, minute, true);
+            mTimePicker.setTitle("Select Time");
+            mTimePicker.show();
         });
 
 
