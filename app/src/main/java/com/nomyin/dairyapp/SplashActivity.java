@@ -2,18 +2,15 @@ package com.nomyin.dairyapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.BroadcastReceiver;
+import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 
+@SuppressLint("CustomSplashScreen")
 public class SplashActivity extends AppCompatActivity {
     //TODO 5000
     private static final long DELAY_MS = 2000; // 5 seconds delay
-    private BroadcastReceiver myReceiver;
-
-    private IntentFilter filter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -1,6 +1,8 @@
 package com.nomyin.dairyapp;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +25,7 @@ public class EventAdapter extends BaseAdapter {
         this.activity = activity;
     }
 
-    ArrayList<MyEvent> events = new ArrayList();
+    ArrayList<MyEvent> events = new ArrayList<>();
 
     // override other abstract methods here
 
@@ -42,10 +44,11 @@ public class EventAdapter extends BaseAdapter {
         return 0;
     }
 
+    @SuppressLint({"ViewHolder", "InflateParams"})
     @Override
     public View getView(int position, View convertView, ViewGroup container) {
 
-            LayoutInflater inflater = (LayoutInflater) this.activity.getSystemService(activity.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater inflater = (LayoutInflater) this.activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.list_item, null);
             MyEvent event = events.get(position);
             ((TextView) convertView.findViewById(R.id.eventName)).setText(event.eventName);
